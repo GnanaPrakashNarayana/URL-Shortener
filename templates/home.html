@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>URL Shortener</h1>
+        
+        <!-- Error message -->
+        {{ if .Error }}
+        <div class="error">
+            {{ .Error }}
+        </div>
+        {{ end }}
+        
+        <!-- URL shortening form -->
+        <form action="/shorten" method="post">
+            <div class="form-group">
+                <input type="url" name="url" placeholder="Enter URL to shorten" required>
+                <button type="submit">Shorten</button>
+            </div>
+        </form>
+        
+        <!-- List of shortened URLs -->
+        <h2>Recently Shortened URLs</h2>
+        <div class="url-list">
+            {{ if .URLs }}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Short URL</th>
+                            <th>Original URL</th>
+                            <th>Created</th>
+                            <th>Visits</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{ range .URLs }}
+                        <tr>
+                            <td>
+                                <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
+                                <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
+                            </td>
+                            <td><a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a></td>
+                            <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
+                            <td>{{ .Visits }}</td>
+                        </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+            {{ else }}
+                <p>No URLs have been shortened yet.</p>
+            {{ end }}
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
