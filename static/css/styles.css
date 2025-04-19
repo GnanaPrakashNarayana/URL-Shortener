@@ -101,7 +101,17 @@ a:hover {
     max-width: 1024px;
     margin: 0 auto;
     padding: 0 24px; /* Increased horizontal padding */
+    /* FIX: Add padding-top to push content below sticky header */
+    padding-top: calc(var(--header-height) + 40px); /* Header height + desired gap */
 }
+/* Auth container might need less top padding if centered vertically */
+.auth-container {
+     padding-top: 40px; /* Override general padding-top if needed */
+     /* Keep vertical centering approach */
+     min-height: calc(100vh - var(--header-height));
+     /* Remove the -80px adjustment if padding-top handles spacing */
+}
+
 
 /* Header */
 .site-header {
@@ -128,8 +138,8 @@ a:hover {
 .site-logo {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--label-color);
-    transition: opacity var(--transition-speed-fast) ease;
+    color: var(--label-color); /* Default to label color */
+    transition: opacity var(--transition-speed-fast) ease, color var(--transition-speed-medium) ease;
 }
 .site-logo:hover { opacity: 0.7; }
 .site-nav {
@@ -137,6 +147,13 @@ a:hover {
     align-items: center;
     gap: 16px;
 }
+/* Style for the welcome text span */
+.site-nav span {
+    color: var(--secondary-label-color); /* Use secondary color by default */
+    font-size: 0.9rem;
+    transition: color var(--transition-speed-medium) ease;
+}
+
 
 /* Card */
 .card {
@@ -246,10 +263,10 @@ a:hover {
 .auth-container {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: center; /* Center vertically */
     align-items: center;
-    min-height: calc(100vh - var(--header-height) - 80px);
-    padding: 40px 24px; /* Match container padding */
+    /* padding-top: 40px; */ /* Removed override, let general padding handle it */
+    min-height: calc(100vh - var(--header-height)); /* Ensure it takes height */
 }
 .auth-card {
     width: 100%;
@@ -257,7 +274,7 @@ a:hover {
     background-color: var(--secondary-system-background);
     border: none;
     box-shadow: none;
-    margin-top: 20px;
+    margin-top: 0; /* Remove margin-top if padding-top handles spacing */
     opacity: 0; /* Start hidden for animation */
     animation: fadeInUp var(--transition-speed-slow) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
     animation-delay: 0.1s;
@@ -323,7 +340,7 @@ a:hover {
 .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
 
 /* General Page Styles (Home/Dashboard) */
-.page-header { text-align: center; margin: 70px 0 50px; }
+.page-header { text-align: center; margin: 0 0 50px; } /* Adjusted margins, rely on container padding-top */
 .page-title { font-size: 2.5rem; margin-bottom: 12px; }
 .page-description { max-width: 600px; margin: 0 auto; color: var(--secondary-label-color); }
 
@@ -337,8 +354,8 @@ a:hover {
 .copy-btn { background-color: var(--fill-color); color: var(--primary-color); border: none; border-radius: var(--border-radius-small); padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all var(--transition-speed-fast) ease; font-weight: 500;}
 .copy-btn:hover { background-color: var(--fill-hover); filter: brightness(1.05); }
 
-/* Dashboard Stats */
-.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+/* Dashboard Specific Styles */
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; } /* Keep margin here */
 .dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 40px; }
 .stat-card { background-color: var(--secondary-system-background); border-radius: var(--border-radius-large); padding: 20px; box-shadow: var(--shadow-subtle); transition: all var(--transition-speed-medium) ease; border: 1px solid var(--quaternary-label-color); }
 .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card); }
@@ -382,6 +399,20 @@ body.dark-mode {
         background-color: rgba(var(--system-background-rgb), 0.75); /* Use dark RGB */
         border-bottom-color: var(--tertiary-color-dark);
     }
+    /* FIX: Explicitly set header text colors for dark mode */
+    .site-logo {
+        color: var(--label-color-dark);
+    }
+    .site-nav span {
+        color: var(--secondary-label-color-dark); /* Lighter secondary text */
+    }
+    .site-nav .btn-link {
+        color: var(--primary-color); /* Keep link color consistent or adjust if needed */
+    }
+     .site-nav .btn-link:hover {
+         color: var(--primary-hover-dark);
+     }
+
     .card {
         border-color: var(--tertiary-color-dark);
     }
@@ -422,11 +453,14 @@ body.dark-mode {
      .stat-card {
         border-color: var(--tertiary-color-dark);
      }
+     .theme-toggle-button {
+        color: var(--secondary-label-color-dark); /* Ensure toggle button icon uses dark mode color */
+     }
      .theme-toggle-button:hover {
         background-color: var(--fill-color-dark);
      }
      .ripple {
-        background: rgba(0, 0, 0, 0.3); /* Darker ripple */
+        background: rgba(255, 255, 255, 0.15); /* Lighter ripple on dark */
      }
      .auth-footer {
         border-top-color: var(--tertiary-color-dark);
@@ -448,8 +482,14 @@ body.dark-mode {
     .card-body { padding: 24px; }
     .btn { padding: 10px 20px; font-size: 0.9375rem; }
     .form-control { padding: 10px 12px; font-size: 0.9375rem; }
-    .auth-container { min-height: calc(100vh - var(--header-height) - 40px); padding: 20px 24px; }
-    .page-header { margin: 50px 0 30px; }
+    .container, .auth-container, .dashboard-container {
+         padding-top: calc(var(--header-height) + 24px); /* Reduce top padding on mobile */
+    }
+    .auth-container {
+        min-height: calc(100vh - var(--header-height)); /* Readjust min-height */
+         padding: 20px 24px; /* Keep horizontal padding */
+    }
+    .page-header { margin-bottom: 30px; } /* Adjust page header margin */
     .page-title { font-size: 2rem; }
 
     /* Responsive Table (Example - adjust if needed) */
