@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/config"
+	"github.com/GnanaPrakashNarayana/url-shortener/internal/database"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/handlers"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/services"
@@ -14,17 +15,48 @@ import (
 
 // App represents the application
 type App struct {
-	config    *config.Config
-	repo      repository.Repository
-	server    *http.Server
+	config     *config.Config
+	repo       repository.Repository
+	server     *http.Server
 	apiHandler *handlers.API
 	webHandler *handlers.Web
+	dbManager  *database.Manager
 }
 
 // New creates a new application
 func New(cfg *config.Config) (*App, error) {
-	// Create repository
-	repo := repository.NewMemoryRepository()
+	var repo repository.Repository
+	var dbManager *database.Manager
+	var err error
+
+	// Initialize the repository based on the configuration
+	if cfg.Database.Type == "postgres" {
+		// Create database manager
+		dbManager, err = database.NewManager(&cfg.Database)
+		if err != nil {
+			return nil, err
+		}
+
+		// Connect to the database
+		db, err := dbManager.Connect()
+		if err != nil {
+			return nil, err
+		}
+
+		// Run migrations
+		if err := dbManager.Migrate(); err != nil {
+			return nil, err
+		}
+
+		// Create PostgreSQL repository
+		repo, err = repository.NewPostgresRepository(db)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// Fall back to memory repository
+		repo = repository.NewMemoryRepository()
+	}
 
 	// Create shortener service
 	shortenerService := services.NewShortenerService(
@@ -65,11 +97,12 @@ func New(cfg *config.Config) (*App, error) {
 	}
 
 	return &App{
-		config:    cfg,
-		repo:      repo,
-		server:    server,
+		config:     cfg,
+		repo:       repo,
+		server:     server,
 		apiHandler: apiHandler,
 		webHandler: webHandler,
+		dbManager:  dbManager,
 	}, nil
 }
 
@@ -92,6 +125,13 @@ func (a *App) Stop() error {
 	// Close the repository
 	if err := a.repo.Close(); err != nil {
 		return err
+	}
+
+	// Close the database manager if it exists
+	if a.dbManager != nil {
+		if err := a.dbManager.Close(); err != nil {
+			return err
+		}
 	}
 
 	return nil
