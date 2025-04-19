@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="theme-color" content="#0071e3">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="/" class="site-logo fade-in">Rapid URL</a>
+            <nav class="site-nav fade-in delay-1">
+                <span>Welcome, {{ .User.Username }}</span>
+                <a href="/auth/logout" class="btn btn-secondary">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header fade-in">
+            <h1>Your Dashboard</h1>
+            <div class="dashboard-nav">
+                <a href="/" class="btn btn-secondary">Home</a>
+            </div>
+        </div>
+        
+        <!-- Error message -->
+        {{ if .Error }}
+        <div class="error fade-in delay-1">
+            {{ .Error }}
+        </div>
+        {{ end }}
+        
+        <!-- Stats cards - let's show some simple stats -->
+        <div class="dash-stats">
+            <div class="stat-card fade-in delay-1">
+                <div class="stat-value">{{ len .URLs }}</div>
+                <div class="stat-label">Total Links</div>
+            </div>
+            
+            <!-- Calculate total visits - removed add function -->
+            <div class="stat-card fade-in delay-2">
+                <div class="stat-value">
+                    <!-- This will be filled by JavaScript -->
+                    <span id="totalVisits">0</span>
+                </div>
+                <div class="stat-label">Total Visits</div>
+            </div>
+            
+            <!-- You could add more stat cards here -->
+        </div>
+        
+        <!-- URL shortening form -->
+        <div class="url-shortener-form fade-in delay-3">
+            <form action="/dashboard/shorten" method="post" class="card">
+                <div class="card-body">
+                    <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
+                    <div class="form-group">
+                        <input type="url" name="url" placeholder="Enter your long URL here" class="form-control url-input" required>
+                        <button type="submit" class="btn btn-primary url-input-btn">Shorten</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- List of user's shortened URLs -->
+        <h2 class="fade-in delay-4">Your Shortened URLs</h2>
+        <div class="url-list fade-in delay-5">
+            {{ if .URLs }}
+                <div class="card">
+                    <table class="urls-table">
+                        <thead>
+                            <tr>
+                                <th>Short URL</th>
+                                <th>Original URL</th>
+                                <th>Created</th>
+                                <th>Visits</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{ range .URLs }}
+                            <tr class="url-row">
+                                <td>
+                                    <div class="short-url-cell">
+                                        <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
+                                        <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="original-url" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        <a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a>
+                                    </div>
+                                </td>
+                                <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                                <td class="visit-count" data-visits="{{ .Visits }}">{{ .Visits }}</td>
+                            </tr>
+                            {{ end }}
+                        </tbody>
+                    </table>
+                </div>
+            {{ else }}
+                <div class="card">
+                    <div class="card-body" style="text-align: center; padding: 60px 0;">
+                        <p>You haven't shortened any URLs yet.</p>
+                        <p>Use the form above to create your first shortened URL!</p>
+                    </div>
+                </div>
+            {{ end }}
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+    <script>
+        // Calculate total visits using JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const visitCounts = document.querySelectorAll('.visit-count');
+            let totalVisits = 0;
+            
+            visitCounts.forEach(function(element) {
+                totalVisits += parseInt(element.getAttribute('data-visits') || 0);
+            });
+            
+            document.getElementById('totalVisits').textContent = totalVisits;
+        });
+    </script>
+</body>
+</html>

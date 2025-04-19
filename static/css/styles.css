@@ -1,0 +1,507 @@
+/* Modern minimal design with apple-like smooth animations */
+:root {
+    /* Refined Color Palette (Inspired by Apple's Human Interface Guidelines) */
+    --primary-color: #007aff; /* Vibrant Blue */
+    --primary-hover: #0a84ff; /* Slightly Lighter Blue for hover */
+    --secondary-color: #8e8e93; /* Gray for secondary text/elements */
+    --tertiary-color: #d1d1d6; /* Borders (Light Mode) */
+    --fill-color: #f0f0f0; /* Background for inputs, some buttons (Light Mode) */
+    --fill-hover: #e8e8e8; /* Hover state for fill elements (Light Mode) */
+    --label-color: #1d1d1f; /* Primary text color (light mode) */
+    --secondary-label-color: #6e6e73; /* Secondary text (light mode) */
+    --tertiary-label-color: #aeaeb2; /* Tertiary text (light mode) */
+    --quaternary-label-color: #c6c6c8; /* Quaternary text / subtle borders (light mode) */
+    --system-background: #ffffff; /* Page background (light mode) */
+    --secondary-system-background: #f9f9f9; /* Card/grouped backgrounds (light mode) */
+    --danger-color: #ff3b30; /* System Red */
+    --success-color: #34c759; /* System Green */
+
+    /* Dark Mode Palette Variables (used by .dark-mode class) */
+    --label-color-dark: #ffffff;
+    --secondary-label-color-dark: rgba(235, 235, 245, 0.6);
+    --tertiary-label-color-dark: rgba(235, 235, 245, 0.3);
+    --quaternary-label-color-dark: rgba(235, 235, 245, 0.18);
+    --system-background-dark: #000000;
+    --secondary-system-background-dark: #161618; /* Slightly darker card bg */
+    --tertiary-system-background-dark: #2c2c2e;
+    --fill-color-dark: #2c2c2e;
+    --fill-hover-dark: #3a3a3c;
+    --tertiary-color-dark: #3a3a3c; /* Dark mode borders/dividers */
+    --primary-hover-dark: #409cff; /* Adjusted dark hover */
+
+    /* Layout & Typography */
+    --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --header-height: 60px;
+    --border-radius-large: 12px; /* Standard corner radius */
+    --border-radius-medium: 8px;
+    --border-radius-small: 6px;
+    --transition-speed-fast: 0.2s;
+    --transition-speed-medium: 0.3s;
+    --transition-speed-slow: 0.4s;
+    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06); /* Refined light shadow */
+    --shadow-card: 0 5px 15px rgba(0, 0, 0, 0.08); /* Refined light shadow */
+    --shadow-subtle-dark: 0 1px 3px rgba(0, 0, 0, 0.2); /* Darker subtle shadow */
+    --shadow-card-dark: 0 5px 15px rgba(0, 0, 0, 0.3); /* Darker card shadow */
+
+    /* RGB versions for RGBA backgrounds */
+    --system-background-rgb: 255, 255, 255;
+    --danger-color-rgb: 255, 59, 48;
+}
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+::selection {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--label-color);
+    background-color: var(--system-background);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color var(--transition-speed-medium) ease, color var(--transition-speed-medium) ease;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 1em; /* Consistent bottom margin */
+}
+h1 { font-size: 2.125rem; letter-spacing: -0.022em; }
+h2 { font-size: 1.75rem; letter-spacing: -0.019em; margin-top: 2.5rem; } /* Add top margin */
+h3 { font-size: 1.375rem; letter-spacing: -0.016em; }
+p { margin-bottom: 1.2em; } /* Slightly more space */
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color var(--transition-speed-fast) ease, opacity var(--transition-speed-fast) ease;
+}
+a:hover {
+    color: var(--primary-hover);
+    opacity: 0.85;
+}
+
+/* Container & Layout */
+.container, .auth-container, .dashboard-container {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 0 24px; /* Increased horizontal padding */
+    /* FIX: Add padding-top to push content below sticky header */
+    padding-top: calc(var(--header-height) + 40px); /* Header height + desired gap */
+}
+/* Auth container might need less top padding if centered vertically */
+.auth-container {
+     padding-top: 40px; /* Override general padding-top if needed */
+     /* Keep vertical centering approach */
+     min-height: calc(100vh - var(--header-height));
+     /* Remove the -80px adjustment if padding-top handles spacing */
+}
+
+
+/* Header */
+.site-header {
+    position: sticky;
+    top: 0;
+    height: var(--header-height);
+    background-color: rgba(var(--system-background-rgb), 0.8); /* Use RGB var */
+    backdrop-filter: saturate(180%) blur(15px);
+    border-bottom: 1px solid var(--quaternary-label-color);
+    display: flex;
+    align-items: center;
+    padding: 0 24px; /* Match container padding */
+    z-index: 1000;
+    transition: background-color var(--transition-speed-medium) ease, border-color var(--transition-speed-medium) ease;
+}
+.site-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1024px;
+    margin: 0 auto;
+}
+.site-logo {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--label-color); /* Default to label color */
+    transition: opacity var(--transition-speed-fast) ease, color var(--transition-speed-medium) ease;
+}
+.site-logo:hover { opacity: 0.7; }
+.site-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+/* Style for the welcome text span */
+.site-nav span {
+    color: var(--secondary-label-color); /* Use secondary color by default */
+    font-size: 0.9rem;
+    transition: color var(--transition-speed-medium) ease;
+}
+
+
+/* Card */
+.card {
+    background-color: var(--secondary-system-background);
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-subtle);
+    overflow: hidden;
+    transition: transform var(--transition-speed-medium) cubic-bezier(0.25, 0.1, 0.25, 1),
+                box-shadow var(--transition-speed-medium) cubic-bezier(0.25, 0.1, 0.25, 1),
+                background-color var(--transition-speed-medium) ease,
+                border-color var(--transition-speed-medium) ease;
+    border: 1px solid var(--quaternary-label-color);
+    margin-bottom: 2rem; /* Increased space below cards */
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card);
+}
+.card-body {
+    padding: 32px; /* Increased card padding */
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 24px; /* Increased space */
+}
+.form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--secondary-label-color);
+    transition: color var(--transition-speed-fast) ease;
+}
+.form-control {
+    display: block;
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--label-color);
+    background-color: var(--fill-color);
+    border: 1px solid var(--tertiary-color);
+    border-radius: var(--border-radius-medium);
+    transition: all var(--transition-speed-fast) ease-in-out;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background-color: var(--system-background);
+    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+.form-control::placeholder {
+    color: var(--tertiary-label-color);
+    opacity: 1;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    user-select: none;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    line-height: 1.45;
+    border-radius: var(--border-radius-medium);
+    transition: all var(--transition-speed-fast) ease-in-out;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+.btn-block { display: block; width: 100%; }
+.btn-primary { color: #fff; background-color: var(--primary-color); }
+.btn-primary:hover { background-color: var(--primary-hover); transform: translateY(-1px); filter: brightness(1.1); }
+.btn-primary:active { transform: translateY(0); filter: brightness(0.95); }
+.btn-secondary { color: var(--primary-color); background-color: var(--fill-color); }
+.btn-secondary:hover { background-color: var(--fill-hover); transform: translateY(-1px); }
+.btn-secondary:active { transform: translateY(0); filter: brightness(0.95); }
+.btn-link { font-weight: 400; color: var(--primary-color); background-color: transparent; padding: 0; border-radius: 0; }
+.btn-link:hover { color: var(--primary-hover); text-decoration: underline; background-color: transparent; transform: none; }
+
+/* URL Shortener Form Layout Fix */
+.url-shortener-form .card-body { padding: 24px; }
+.url-shortener-form .form-group {
+    display: flex;
+    gap: 12px; /* Add gap */
+    align-items: center;
+    margin-bottom: 0; /* Remove bottom margin */
+}
+.url-shortener-form .form-control {
+    flex-grow: 1;
+    padding-right: 14px; /* Reset padding */
+}
+.url-shortener-form .btn {
+    flex-shrink: 0;
+    padding: 12px 20px;
+}
+
+/* Authentication Pages Specific Styles */
+.auth-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center vertically */
+    align-items: center;
+    /* padding-top: 40px; */ /* Removed override, let general padding handle it */
+    min-height: calc(100vh - var(--header-height)); /* Ensure it takes height */
+}
+.auth-card {
+    width: 100%;
+    max-width: 380px;
+    background-color: var(--secondary-system-background);
+    border: none;
+    box-shadow: none;
+    margin-top: 0; /* Remove margin-top if padding-top handles spacing */
+    opacity: 0; /* Start hidden for animation */
+    animation: fadeInUp var(--transition-speed-slow) cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+    animation-delay: 0.1s;
+}
+.auth-card:hover { transform: none; box-shadow: none; }
+.auth-header { text-align: center; margin-bottom: 28px; opacity: 0; animation: fadeInUp var(--transition-speed-slow) cubic-bezier(0.25, 0.1, 0.25, 1) forwards; animation-delay: 0.15s; }
+.auth-title { font-size: 1.75rem; margin-bottom: 8px; }
+.auth-subtitle { color: var(--secondary-label-color); font-size: 1rem; line-height: 1.4; }
+.auth-form { margin-bottom: 24px; }
+.auth-form .form-group { opacity: 0; animation: fadeInUp var(--transition-speed-slow) cubic-bezier(0.25, 0.1, 0.25, 1) forwards; }
+/* Stagger animation delays */
+.auth-form .form-group:nth-child(1) { animation-delay: 0.2s; }
+.auth-form .form-group:nth-child(2) { animation-delay: 0.25s; }
+.auth-form .form-group:nth-child(3) { animation-delay: 0.3s; }
+.auth-form .form-group:nth-child(4) { animation-delay: 0.35s; } /* For Register page */
+.auth-form .form-group:nth-child(5) { animation-delay: 0.4s; } /* For Register page button */
+.auth-form .form-group .btn { animation-delay: 0.35s; } /* Login page button delay */
+.auth-footer { text-align: center; padding-top: 20px; border-top: 1px solid var(--tertiary-color); margin-top: 24px; font-size: 0.875rem; color: var(--secondary-label-color); opacity: 0; animation: fadeInUp var(--transition-speed-slow) cubic-bezier(0.25, 0.1, 0.25, 1) forwards; animation-delay: 0.55s; }
+.auth-footer a { font-weight: 500; }
+
+/* OAuth Styles */
+.oauth-divider { display: flex; align-items: center; margin: 24px 0; opacity: 0; animation: fadeInUp var(--transition-speed-slow) cubic-bezier(0.25, 0.1, 0.25, 1) forwards; animation-delay: 0.4s; }
+.oauth-divider::before, .oauth-divider::after { content: ""; flex: 1; height: 1px; background-color: var(--tertiary-color); }
+.oauth-divider-text { padding: 0 12px; color: var(--secondary-label-color); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.oauth-buttons { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.oauth-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 12px; border-radius: var(--border-radius-medium); background-color: var(--fill-color); color: var(--label-color); border: 1px solid var(--tertiary-color); font-size: 0.9375rem; font-weight: 500; transition: all var(--transition-speed-fast) ease; opacity: 0; animation: fadeInUp var(--transition-speed-slow) cubic-bezier(0.25, 0.1, 0.25, 1) forwards; }
+.oauth-buttons .oauth-btn:nth-child(1) { animation-delay: 0.45s; }
+.oauth-buttons .oauth-btn:nth-child(2) { animation-delay: 0.5s; }
+.oauth-btn:hover { transform: translateY(-1px); background-color: var(--fill-hover); border-color: var(--secondary-color); }
+.oauth-btn:active { transform: translateY(0); filter: brightness(0.95); }
+.oauth-btn svg { width: 20px; height: 20px; }
+
+/* Error styles */
+.error {
+    background-color: rgba(var(--danger-color-rgb), 0.1);
+    color: var(--danger-color);
+    padding: 12px 16px;
+    border-radius: var(--border-radius-medium);
+    margin-bottom: 20px;
+    font-size: 0.875rem;
+    border: 1px solid rgba(var(--danger-color-rgb), 0.2);
+    animation: fadeIn var(--transition-speed-medium) ease-out forwards;
+}
+
+/* Animations */
+@keyframes fadeInUp { from { opacity: 0; transform: translate3d(0, 20px, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
+@keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-2px, 0, 0); } 40%, 60% { transform: translate3d(2px, 0, 0); } }
+
+/* Animation classes for non-auth pages (triggered by JS) */
+.animate-fadeInUp { animation: fadeInUp var(--transition-speed-slow) cubic-bezier(0.25, 0.1, 0.25, 1) forwards; opacity: 0; /* Start hidden */ }
+.animate-scaleIn { animation: scaleIn var(--transition-speed-medium) cubic-bezier(0.25, 0.1, 0.25, 1) forwards; opacity: 0; /* Start hidden */ }
+
+/* Ripple Effect */
+.ripple { position: absolute; background: rgba(255, 255, 255, 0.3); border-radius: 50%; transform: scale(0); animation: ripple 0.6s linear; pointer-events: none; z-index: -1; }
+@keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+/* Input Validation styles */
+.form-control.invalid { border-color: var(--danger-color) !important; background-color: rgba(var(--danger-color-rgb), 0.05); }
+.form-control.invalid:focus { box-shadow: 0 0 0 3px rgba(var(--danger-color-rgb), 0.15); }
+.error-msg { color: var(--danger-color); font-size: 0.8125rem; margin-top: 6px; animation: fadeInUp 0.3s ease-out forwards; opacity: 0; }
+.shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* General Page Styles (Home/Dashboard) */
+.page-header { text-align: center; margin: 0 0 50px; } /* Adjusted margins, rely on container padding-top */
+.page-title { font-size: 2.5rem; margin-bottom: 12px; }
+.page-description { max-width: 600px; margin: 0 auto; color: var(--secondary-label-color); }
+
+/* Table Styles */
+.urls-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
+.urls-table th, .urls-table td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--tertiary-color); transition: border-color var(--transition-speed-medium) ease; }
+.urls-table th { font-weight: 500; color: var(--secondary-label-color); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.03em; }
+.urls-table tr:last-child td { border-bottom: none; }
+.short-url-cell { display: flex; align-items: center; gap: 8px; }
+.original-url { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } /* Keep this */
+.copy-btn { background-color: var(--fill-color); color: var(--primary-color); border: none; border-radius: var(--border-radius-small); padding: 4px 8px; font-size: 11px; cursor: pointer; transition: all var(--transition-speed-fast) ease; font-weight: 500;}
+.copy-btn:hover { background-color: var(--fill-hover); filter: brightness(1.05); }
+
+/* Dashboard Specific Styles */
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; } /* Keep margin here */
+.dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 40px; }
+.stat-card { background-color: var(--secondary-system-background); border-radius: var(--border-radius-large); padding: 20px; box-shadow: var(--shadow-subtle); transition: all var(--transition-speed-medium) ease; border: 1px solid var(--quaternary-label-color); }
+.stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-card); }
+.stat-value { font-size: 2rem; font-weight: 600; margin-bottom: 6px; }
+.stat-label { color: var(--secondary-label-color); font-size: 0.8125rem; }
+
+/* Theme Toggle Styling */
+.theme-toggle-button {
+    background: none; border: none; cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; color: var(--secondary-label-color); border-radius: 50%; transition: background-color var(--transition-speed-fast) ease, color var(--transition-speed-fast) ease;
+}
+.theme-toggle-button:hover { background-color: var(--fill-color); }
+.theme-toggle-button svg { width: 20px; height: 20px; transition: transform var(--transition-speed-medium) ease; }
+/* Icons are handled by JS adding/removing .dark-mode class */
+.theme-toggle-button .sun-icon { display: none; } /* Hidden by default (light mode) */
+.theme-toggle-button .moon-icon { display: block; } /* Shown by default (light mode) */
+
+
+/* === Dark Mode Styles (Applied via body.dark-mode class) === */
+@media (prefers-color-scheme: dark) {
+    :root { --system-background-rgb: 0, 0, 0; } /* Set RGB for dark mode */
+}
+
+body.dark-mode {
+    /* Dark Mode Variable Overrides */
+    --label-color: var(--label-color-dark);
+    --secondary-color: var(--secondary-label-color-dark);
+    --tertiary-color: var(--tertiary-color-dark);
+    --fill-color: var(--fill-color-dark);
+    --fill-hover: var(--fill-hover-dark);
+    --system-background: var(--system-background-dark);
+    --secondary-system-background: var(--secondary-system-background-dark);
+    --secondary-label-color: var(--secondary-label-color-dark);
+    --tertiary-label-color: var(--tertiary-label-color-dark);
+    --quaternary-label-color: var(--quaternary-label-color-dark);
+    --primary-hover: var(--primary-hover-dark);
+    --shadow-subtle: var(--shadow-subtle-dark);
+    --shadow-card: var(--shadow-card-dark);
+
+    /* Specific Dark Mode Element Styles */
+     .site-header {
+        background-color: rgba(var(--system-background-rgb), 0.75); /* Use dark RGB */
+        border-bottom-color: var(--tertiary-color-dark);
+    }
+    /* FIX: Explicitly set header text colors for dark mode */
+    .site-logo {
+        color: var(--label-color-dark);
+    }
+    .site-nav span {
+        color: var(--secondary-label-color-dark); /* Lighter secondary text */
+    }
+    .site-nav .btn-link {
+        color: var(--primary-color); /* Keep link color consistent or adjust if needed */
+    }
+     .site-nav .btn-link:hover {
+         color: var(--primary-hover-dark);
+     }
+
+    .card {
+        border-color: var(--tertiary-color-dark);
+    }
+    .form-control {
+        border-color: var(--tertiary-color-dark);
+    }
+     .form-control:focus {
+        background-color: var(--tertiary-system-background-dark);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
+    }
+     .btn-secondary {
+         color: var(--primary-color);
+         background-color: var(--fill-color-dark);
+     }
+     .btn-secondary:hover {
+        background-color: var(--fill-hover-dark);
+     }
+     .oauth-btn {
+        background-color: var(--fill-color-dark);
+        border-color: var(--tertiary-color-dark);
+        color: var(--label-color-dark);
+     }
+     .oauth-btn:hover {
+         background-color: var(--fill-hover-dark);
+         border-color: var(--secondary-label-color-dark);
+     }
+     .urls-table th, .urls-table td {
+         border-bottom-color: var(--tertiary-color-dark);
+     }
+     .copy-btn {
+        background-color: var(--fill-color-dark);
+        color: var(--primary-color);
+     }
+     .copy-btn:hover {
+         background-color: var(--fill-hover-dark);
+     }
+     .stat-card {
+        border-color: var(--tertiary-color-dark);
+     }
+     .theme-toggle-button {
+        color: var(--secondary-label-color-dark); /* Ensure toggle button icon uses dark mode color */
+     }
+     .theme-toggle-button:hover {
+        background-color: var(--fill-color-dark);
+     }
+     .ripple {
+        background: rgba(255, 255, 255, 0.15); /* Lighter ripple on dark */
+     }
+     .auth-footer {
+        border-top-color: var(--tertiary-color-dark);
+     }
+     .oauth-divider::before, .oauth-divider::after {
+        background-color: var(--tertiary-color-dark);
+     }
+     /* Dark mode toggle icon visibility */
+    .theme-toggle-button .sun-icon { display: block; }
+    .theme-toggle-button .moon-icon { display: none; }
+}
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    h1 { font-size: 1.875rem; }
+    h2 { font-size: 1.5rem; }
+    .auth-card { max-width: 95%; padding: 20px; }
+    .card-body { padding: 24px; }
+    .btn { padding: 10px 20px; font-size: 0.9375rem; }
+    .form-control { padding: 10px 12px; font-size: 0.9375rem; }
+    .container, .auth-container, .dashboard-container {
+         padding-top: calc(var(--header-height) + 24px); /* Reduce top padding on mobile */
+    }
+    .auth-container {
+        min-height: calc(100vh - var(--header-height)); /* Readjust min-height */
+         padding: 20px 24px; /* Keep horizontal padding */
+    }
+    .page-header { margin-bottom: 30px; } /* Adjust page header margin */
+    .page-title { font-size: 2rem; }
+
+    /* Responsive Table (Example - adjust if needed) */
+    .urls-table thead { display: none; } /* Hide table header */
+    .urls-table tr { display: block; margin-bottom: 1.5rem; border: 1px solid var(--tertiary-color); border-radius: var(--border-radius-medium); padding: 1rem; }
+    .urls-table td { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; text-align: right; border-bottom: 1px dashed var(--quaternary-label-color); }
+    .urls-table td:last-child { border-bottom: none; }
+    .urls-table td::before { content: attr(data-label); /* Use data-label attribute */ float: left; font-weight: 600; color: var(--secondary-label-color); margin-right: 1rem; text-align: left; }
+    .urls-table td .short-url-cell { justify-content: flex-end; } /* Align right */
+    .urls-table td .original-url { max-width: 60%; text-align: right; } /* Adjust width */
+}
+
+/* Add data-label attributes to your table cells in HTML for the responsive table */
+/* Example: <td data-label="Short URL">...</td> */
+
