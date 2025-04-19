@@ -128,12 +128,16 @@ func New(cfg *config.Config) (*App, error) {
 	// Add auth middleware to all routes
 	router.Use(authMiddleware.Auth)
 
-	// CSRF protection
+	// CSRF protection - UPDATED CONFIG
 	csrfMiddleware := csrf.Protect(
 		[]byte(cfg.Auth.CSRFKey),
-		csrf.Secure(false), // Set to false for local development
+		csrf.Secure(cfg.Auth.SessionCookieSecure), // Use the same setting as session cookie
 		csrf.Path("/"),
-		csrf.SameSite(csrf.SameSiteLaxMode), // Add this line
+		csrf.SameSite(csrf.SameSiteLaxMode),
+		csrf.ErrorHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, "CSRF validation failed: "+csrf.FailureReason(r).Error(), http.StatusForbidden)
+		})),
+		csrf.TrustedOrigins([]string{"localhost:8080", "127.0.0.1:8080"}),
 	)
 	router.Use(csrfMiddleware)
 

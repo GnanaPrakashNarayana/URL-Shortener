@@ -19,8 +19,8 @@ type Dashboard struct {
 
 // NewDashboard creates a new dashboard handler
 func NewDashboard(shortenerService *services.ShortenerService, templatesDir string) (*Dashboard, error) {
-	// Parse templates
-	templates, err := template.ParseGlob(filepath.Join(templatesDir, "*.html"))
+	// Parse templates with custom functions
+	templates, err := template.New("").Funcs(GetTemplateFuncs()).ParseGlob(filepath.Join(templatesDir, "*.html"))
 	if err != nil {
 		return nil, err
 	}

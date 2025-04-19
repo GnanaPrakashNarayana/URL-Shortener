@@ -18,9 +18,10 @@ type Web struct {
 }
 
 // NewWeb creates a new web handler
+// NewWeb creates a new web handler
 func NewWeb(shortenerService *services.ShortenerService, templatesDir string) (*Web, error) {
-	// Parse templates
-	templates, err := template.ParseGlob(filepath.Join(templatesDir, "*.html"))
+	// Parse templates with custom functions
+	templates, err := template.New("").Funcs(GetTemplateFuncs()).ParseGlob(filepath.Join(templatesDir, "*.html"))
 	if err != nil {
 		return nil, err
 	}

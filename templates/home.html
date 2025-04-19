@@ -5,68 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>URL Shortener</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="theme-color" content="#0071e3">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>URL Shortener</h1>
-            <div class="auth-links">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="/" class="site-logo fade-in">Rapid URL</a>
+            <nav class="site-nav fade-in delay-1">
                 {{ if .User }}
-                    <span>Welcome, {{ .User.Username }}</span>
-                    <a href="/dashboard" class="btn-link">Dashboard</a>
-                    <a href="/auth/logout" class="btn-link">Logout</a>
+                    <span>Hi, {{ .User.Username }}</span>
+                    <a href="/dashboard" class="btn btn-secondary">Dashboard</a>
+                    <a href="/auth/logout" class="btn btn-link">Logout</a>
                 {{ else }}
-                    <a href="/auth/login" class="btn-link">Login</a>
-                    <a href="/auth/register" class="btn-link">Register</a>
+                    <a href="/auth/login" class="btn btn-secondary">Login</a>
+                    <a href="/auth/register" class="btn btn-primary">Register</a>
                 {{ end }}
-            </div>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header fade-in">
+            <h1 class="page-title">Shorten Your Links</h1>
+            <p class="page-description">Transform long URLs into short, memorable links that are easy to share.</p>
         </div>
         
         <!-- Error message -->
         {{ if .Error }}
-        <div class="error">
+        <div class="error fade-in delay-1">
             {{ .Error }}
         </div>
         {{ end }}
         
         <!-- URL shortening form -->
-        <form action="/shorten" method="post">
-            <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
-            <div class="form-group">
-                <input type="url" name="url" placeholder="Enter URL to shorten" required>
-                <button type="submit">Shorten</button>
-            </div>
-        </form>
+        <div class="url-shortener-form fade-in delay-2">
+            <form action="/shorten" method="post" class="card">
+                <div class="card-body">
+                    <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
+                    <div class="form-group">
+                        <input type="url" name="url" placeholder="Enter your long URL here" class="form-control url-input" required>
+                        <button type="submit" class="btn btn-primary url-input-btn">Shorten</button>
+                    </div>
+                </div>
+            </form>
+        </div>
         
         <!-- List of shortened URLs -->
-        <h2>Recently Shortened URLs</h2>
-        <div class="url-list">
+        <h2 class="fade-in delay-3">Recently Shortened URLs</h2>
+        <div class="url-list fade-in delay-4">
             {{ if .URLs }}
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Short URL</th>
-                            <th>Original URL</th>
-                            <th>Created</th>
-                            <th>Visits</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{ range .URLs }}
-                        <tr>
-                            <td>
-                                <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
-                                <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
-                            </td>
-                            <td><a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a></td>
-                            <td>{{ .CreatedAt.Format "2006-01-02 15:04:05" }}</td>
-                            <td>{{ .Visits }}</td>
-                        </tr>
-                        {{ end }}
-                    </tbody>
-                </table>
+                <div class="card">
+                    <table class="urls-table">
+                        <thead>
+                            <tr>
+                                <th>Short URL</th>
+                                <th>Original URL</th>
+                                <th>Created</th>
+                                <th>Visits</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{ range .URLs }}
+                            <tr class="url-row">
+                                <td>
+                                    <div class="short-url-cell">
+                                        <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
+                                        <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="original-url" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        <a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a>
+                                    </div>
+                                </td>
+                                <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                                <td>{{ .Visits }}</td>
+                            </tr>
+                            {{ end }}
+                        </tbody>
+                    </table>
+                </div>
             {{ else }}
-                <p>No URLs have been shortened yet.</p>
+                <div class="card">
+                    <div class="card-body" style="text-align: center; padding: 60px 0;">
+                        <p>No URLs have been shortened yet.</p>
+                        <p>Be the first one to shorten a URL!</p>
+                    </div>
+                </div>
             {{ end }}
         </div>
     </div>

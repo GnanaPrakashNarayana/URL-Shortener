@@ -5,53 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - URL Shortener</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="theme-color" content="#0071e3">
 </head>
 <body>
-    <div class="container">
-        <h1>Register</h1>
-        
-        <!-- Error message -->
-        {{ if .Error }}
-        <div class="error">
-            {{ .Error }}
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="/" class="site-logo fade-in">Rapid URL</a>
+            <nav class="site-nav fade-in delay-1">
+                <a href="/auth/login" class="btn btn-secondary">Login</a>
+            </nav>
         </div>
-        {{ end }}
-        
-        <!-- Registration form -->
-        <div class="auth-form">
-            <form action="/auth/register" method="post">
-                <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
-                <input type="hidden" name="redirect" value="{{ .RedirectURL }}">
-                
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required>
+    </header>
+
+    <div class="auth-container">
+        <div class="auth-card card scale-in">
+            <div class="card-body">
+                <div class="auth-header">
+                    <h1 class="auth-title">Create Account</h1>
+                    <p class="auth-subtitle">Join to start creating shortened URLs</p>
                 </div>
                 
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
+                <!-- Error message -->
+                {{ if .Error }}
+                <div class="error">
+                    {{ .Error }}
                 </div>
+                {{ end }}
                 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
+                <form action="/auth/register" method="post" class="auth-form">
+                    <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
+                    <input type="hidden" name="redirect" value="{{ .RedirectURL }}">
+                    
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password_confirm" class="form-label">Confirm Password</label>
+                        <input type="password" id="password_confirm" name="password_confirm" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+                    </div>
+                </form>
                 
-                <div class="form-group">
-                    <label for="password_confirm">Confirm Password</label>
-                    <input type="password" id="password_confirm" name="password_confirm" required>
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="/auth/login">Login</a></p>
                 </div>
-                
-                <div class="form-group">
-                    <button type="submit" class="btn-auth">Register</button>
-                </div>
-            </form>
-            
-            <div class="auth-links">
-                <p>Already have an account? <a href="/auth/login">Login</a></p>
             </div>
         </div>
     </div>
+    
+    <script src="/static/js/script.js"></script>
 </body>
 </html>
