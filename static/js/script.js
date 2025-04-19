@@ -1,245 +1,194 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Apply fade-in animations to elements
-    const fadeElements = document.querySelectorAll('.fade-in');
-    fadeElements.forEach(element => {
-        element.style.opacity = '0';
-        
-        // Create an observer for each element
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    // Add the animation class when element is in viewport
-                    entry.target.classList.add('animate');
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-        
-        observer.observe(element);
-    });
-    
-    // URL input animation
-    const urlInput = document.querySelector('.url-input');
-    if (urlInput) {
-        urlInput.addEventListener('focus', function() {
-            this.parentElement.classList.add('input-focused');
-        });
-        
-        urlInput.addEventListener('blur', function() {
-            this.parentElement.classList.remove('input-focused');
-        });
-    }
-    
-    // Copy button functionality with animation
-    const copyButtons = document.querySelectorAll('.copy-btn');
-    copyButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const url = this.getAttribute('data-url');
-            
-            // Create a temporary input element
-            const input = document.createElement('input');
-            input.value = url;
-            document.body.appendChild(input);
-            
-            // Select the text
-            input.select();
-            input.setSelectionRange(0, 99999);
-            
-            // Copy to clipboard
-            document.execCommand('copy');
-            
-            // Remove the temporary input
-            document.body.removeChild(input);
-            
-            // Animate the button
-            const originalText = this.textContent;
-            this.textContent = 'Copied!';
-            this.style.backgroundColor = 'var(--success-color)';
-            this.style.color = 'white';
-            
-            // Add ripple effect
-            const ripple = document.createElement('span');
-            ripple.classList.add('ripple');
-            this.appendChild(ripple);
-            
-            setTimeout(() => {
-                ripple.remove();
-            }, 600);
-            
-            // Reset button after animation
-            setTimeout(() => {
-                this.textContent = originalText;
-                this.style.backgroundColor = '';
-                this.style.color = '';
-            }, 2000);
-        });
-    });
-    
-    // Form validation with animations
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function(event) {
-            const requiredInputs = form.querySelectorAll('[required]');
-            let valid = true;
-            
-            requiredInputs.forEach(input => {
-                if (!input.value.trim()) {
-                    valid = false;
-                    input.classList.add('invalid');
-                    
-                    // Add shake animation
-                    input.classList.add('shake');
-                    setTimeout(() => {
-                        input.classList.remove('shake');
-                    }, 600);
-                    
-                    const formGroup = input.closest('.form-group');
-                    if (formGroup) {
-                        const errorMsg = formGroup.querySelector('.error-msg') || document.createElement('div');
-                        errorMsg.className = 'error-msg';
-                        errorMsg.textContent = 'This field is required';
-                        
-                        if (!formGroup.querySelector('.error-msg')) {
-                            formGroup.appendChild(errorMsg);
-                        }
-                    }
-                } else {
-                    input.classList.remove('invalid');
-                    const formGroup = input.closest('.form-group');
-                    if (formGroup) {
-                        const errorMsg = formGroup.querySelector('.error-msg');
-                        if (errorMsg) {
-                            errorMsg.remove();
-                        }
-                    }
-                }
-            });
-            
-            if (!valid) {
-                event.preventDefault();
-            }
-        });
-        
-        // Real-time validation
-        const inputs = form.querySelectorAll('input, textarea');
-        inputs.forEach(input => {
-            input.addEventListener('input', function() {
-                if (this.hasAttribute('required') && !this.value.trim()) {
-                    this.classList.add('invalid');
-                } else {
-                    this.classList.remove('invalid');
-                    const formGroup = this.closest('.form-group');
-                    if (formGroup) {
-                        const errorMsg = formGroup.querySelector('.error-msg');
-                        if (errorMsg) {
-                            errorMsg.remove();
-                        }
-                    }
-                }
-            });
-        });
-    });
-    
-    // Add smooth scroll behavior
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            const targetElement = document.querySelector(targetId);
-            
-            if (targetElement) {
-                window.scrollTo({
-                    top: targetElement.offsetTop - 80,
-                    behavior: 'smooth'
-                });
-            }
-        });
-    });
-    
-    // Add animation to cards on scroll
-    const animateOnScroll = () => {
-        const cards = document.querySelectorAll('.card, .url-card, .stat-card');
-        
-        cards.forEach(card => {
-            const cardPosition = card.getBoundingClientRect().top;
-            const screenPosition = window.innerHeight / 1.3;
-            
-            if (cardPosition < screenPosition) {
-                card.classList.add('animate');
-            }
-        });
-    };
-    
-    // Call the animation function on load and scroll
-    animateOnScroll();
-    window.addEventListener('scroll', animateOnScroll);
-    
-    // Add ripple effect to buttons
-    const buttons = document.querySelectorAll('.btn, .copy-btn');
+
+    // --- Ripple Effect ---
+    // (Kept from original - CSS handles the visuals)
+    const buttons = document.querySelectorAll('.btn, .copy-btn, .oauth-btn'); // Added oauth-btn
     buttons.forEach(button => {
         button.addEventListener('click', function(e) {
-            const x = e.clientX - e.target.getBoundingClientRect().left;
-            const y = e.clientY - e.target.getBoundingClientRect().top;
-            
+            // Clear existing ripples first
+            const existingRipple = button.querySelector('.ripple');
+            if (existingRipple) {
+                existingRipple.remove();
+            }
+
+            const rect = e.target.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
             const ripple = document.createElement('span');
             ripple.classList.add('ripple');
             ripple.style.left = `${x}px`;
             ripple.style.top = `${y}px`;
-            
-            this.appendChild(ripple);
-            
+
+            // Use requestAnimationFrame to ensure the element is added before animation starts
+            requestAnimationFrame(() => {
+                this.appendChild(ripple);
+            });
+
+
+            // Clean up ripple after animation
             setTimeout(() => {
-                ripple.remove();
+                if (ripple.parentNode) { // Check if still attached
+                   ripple.remove();
+                }
             }, 600);
         });
     });
-    
-    // Add CSS for the ripple effect
-    const style = document.createElement('style');
-    style.textContent = `
-        .btn, .copy-btn {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .ripple {
-            position: absolute;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 50%;
-            transform: scale(0);
-            animation: ripple 0.6s linear;
-            pointer-events: none;
-        }
-        
-        @keyframes ripple {
-            to {
-                transform: scale(4);
-                opacity: 0;
+
+
+    // --- Form Validation & Animations ---
+    const forms = document.querySelectorAll('form.auth-form'); // Target auth forms specifically if needed
+    forms.forEach(form => {
+        const requiredInputs = form.querySelectorAll('[required]');
+
+        // Function to show error message
+        const showError = (input, message) => {
+            input.classList.add('invalid');
+            const formGroup = input.closest('.form-group');
+            if (formGroup) {
+                // Remove existing error message first
+                const existingError = formGroup.querySelector('.error-msg');
+                if (existingError) {
+                    existingError.remove();
+                }
+                // Add new error message
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'error-msg';
+                errorMsg.textContent = message || 'This field is required'; // Default message
+                formGroup.appendChild(errorMsg);
+
+                // Add shake animation to the input
+                input.classList.add('shake');
+                 // Remove shake class after animation finishes
+                input.addEventListener('animationend', () => {
+                    input.classList.remove('shake');
+                }, { once: true });
             }
-        }
-        
-        .animate {
-            animation: fadeIn 0.5s ease-out forwards;
-        }
-        
-        .shake {
-            animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-        }
-        
-        .invalid {
-            border-color: var(--danger-color) !important;
-        }
-        
-        .error-msg {
-            color: var(--danger-color);
-            font-size: 0.8rem;
-            margin-top: 4px;
-            animation: fadeIn 0.3s ease-out forwards;
-        }
-        
-        .input-focused {
-            transform: scale(1.01);
-        }
-    `;
-    document.head.appendChild(style);
-});
+        };
+
+        // Function to clear error message
+        const clearError = (input) => {
+            input.classList.remove('invalid');
+             input.classList.remove('shake'); // Ensure shake is removed
+            const formGroup = input.closest('.form-group');
+            if (formGroup) {
+                const errorMsg = formGroup.querySelector('.error-msg');
+                if (errorMsg) {
+                    errorMsg.remove();
+                }
+            }
+        };
+
+        // Validate on Submit
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            requiredInputs.forEach(input => {
+                clearError(input); // Clear previous errors
+                if (!input.value.trim()) {
+                    isValid = false;
+                    showError(input);
+                }
+                // Add specific validation like email format if needed
+                if (input.type === 'email' && input.value.trim() && !/\S+@\S+\.\S+/.test(input.value)) {
+                     isValid = false;
+                     showError(input, 'Please enter a valid email address.');
+                }
+                 // Add password confirmation check
+                 if (input.id === 'password_confirm') {
+                    const passwordInput = form.querySelector('#password');
+                    if (passwordInput && input.value !== passwordInput.value) {
+                         isValid = false;
+                         showError(input, 'Passwords do not match.');
+                    }
+                }
+            });
+
+            if (!isValid) {
+                event.preventDefault(); // Prevent form submission
+            }
+        });
+
+        // Real-time validation feedback (on input change)
+        requiredInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                // Clear error as user types
+                 if (this.classList.contains('invalid')) {
+                    clearError(this);
+                 }
+            });
+             input.addEventListener('blur', function() {
+                // Optionally re-validate on blur
+                clearError(this); // Clear first
+                 if (this.hasAttribute('required') && !this.value.trim()) {
+                     showError(this);
+                 } else if (this.type === 'email' && this.value.trim() && !/\S+@\S+\.\S+/.test(this.value)) {
+                     showError(this, 'Please enter a valid email address.');
+                 } else if (this.id === 'password_confirm') {
+                    const passwordInput = form.querySelector('#password');
+                    if (passwordInput && this.value && this.value !== passwordInput.value) {
+                         showError(this, 'Passwords do not match.');
+                    }
+                }
+             });
+        });
+    });
+
+
+     // --- Copy Button Functionality (for home/dashboard pages) ---
+    const copyButtons = document.querySelectorAll('.copy-btn');
+    copyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            if (!url) return;
+
+            navigator.clipboard.writeText(url).then(() => {
+                // Success feedback
+                const originalText = this.textContent;
+                this.textContent = 'Copied!';
+                this.style.backgroundColor = 'var(--success-color)'; // Use CSS variable
+                this.style.color = 'white';
+
+                 // Optional: Add a temporary success class
+                 this.classList.add('copied');
+
+                // Reset button after a delay
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.style.backgroundColor = ''; // Revert to default
+                    this.style.color = ''; // Revert to default
+                     this.classList.remove('copied');
+                }, 1500); // Shorter duration
+            }).catch(err => {
+                console.error('Failed to copy URL: ', err);
+                // Optional: Show error feedback to the user
+            });
+        });
+    });
+
+
+    // --- Remove fade-in and other general page animations from JS ---
+    // CSS now handles the entry animations for auth pages.
+    // If you need JS-driven animations for other pages (like scroll-triggered), keep that logic.
+    // For example, the original script had IntersectionObserver logic.
+    // If you want animations on the home/dashboard pages, keep or adapt that section.
+    // Example: Keep scroll animations for cards on other pages
+    const animateOnScroll = () => {
+        const cards = document.querySelectorAll('.card:not(.auth-card), .stat-card'); // Exclude auth-card
+        const screenPosition = window.innerHeight / 1.2; // Adjust trigger point
+
+        cards.forEach(card => {
+            const cardPosition = card.getBoundingClientRect().top;
+            if (!card.classList.contains('animated') && cardPosition < screenPosition) {
+                card.classList.add('animated', 'animate-fadeInUp'); // Use fadeInUp or scaleIn
+            }
+        });
+    };
+
+    // Initial check and add scroll listener if non-auth cards exist
+     if (document.querySelector('.card:not(.auth-card), .stat-card')) {
+        animateOnScroll(); // Run on load
+        window.addEventListener('scroll', animateOnScroll);
+    }
+
+
+}); // End DOMContentLoaded
