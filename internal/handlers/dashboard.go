@@ -11,93 +11,97 @@ import (
 	"github.com/gorilla/csrf"
 )
 
-// Web handles web requests
-type Web struct {
+// Dashboard handles dashboard requests
+type Dashboard struct {
 	shortenerService *services.ShortenerService
 	templates        *template.Template
 }
 
-// NewWeb creates a new web handler
-func NewWeb(shortenerService *services.ShortenerService, templatesDir string) (*Web, error) {
+// NewDashboard creates a new dashboard handler
+func NewDashboard(shortenerService *services.ShortenerService, templatesDir string) (*Dashboard, error) {
 	// Parse templates
 	templates, err := template.ParseGlob(filepath.Join(templatesDir, "*.html"))
 	if err != nil {
 		return nil, err
 	}
 
-	return &Web{
+	return &Dashboard{
 		shortenerService: shortenerService,
 		templates:        templates,
 	}, nil
 }
 
-// Home handles the home page request
-func (h *Web) Home(w http.ResponseWriter, r *http.Request) {
-	// Get all URLs
-	urls, err := h.shortenerService.List(r.Context())
+// Home handles the dashboard home page
+func (h *Dashboard) Home(w http.ResponseWriter, r *http.Request) {
+	// Get the user from the context
+	user := middleware.GetUserFromContext(r.Context())
+	if user == nil {
+		http.Redirect(w, r, "/auth/login", http.StatusSeeOther)
+		return
+	}
+
+	// Get the user's URLs
+	urls, err := h.shortenerService.ListByUserID(r.Context(), user.ID)
 	if err != nil {
 		h.renderError(w, "Failed to list URLs", http.StatusInternalServerError)
 		return
 	}
 
-	// Get the user from the context (if any)
-	user := middleware.GetUserFromContext(r.Context())
-
 	// Render the template
 	data := struct {
+		User      *models.User
 		URLs      []*models.URLResponse
 		Error     string
-		User      *models.User
 		CSRFToken string
 	}{
+		User:      user,
 		URLs:      urls,
 		Error:     r.URL.Query().Get("error"),
-		User:      user,
 		CSRFToken: csrf.Token(r),
 	}
 
-	h.renderTemplate(w, "home.html", data)
+	h.renderTemplate(w, "dashboard.html", data)
 }
 
-// ShortenURL handles the request to shorten a URL
-func (h *Web) ShortenURL(w http.ResponseWriter, r *http.Request) {
+// ShortenURL handles the request to shorten a URL from the dashboard
+func (h *Dashboard) ShortenURL(w http.ResponseWriter, r *http.Request) {
+	// Get the user from the context
+	user := middleware.GetUserFromContext(r.Context())
+	if user == nil {
+		http.Redirect(w, r, "/auth/login", http.StatusSeeOther)
+		return
+	}
+
 	// Parse the form
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/?error=Invalid form", http.StatusSeeOther)
+		http.Redirect(w, r, "/dashboard?error=Invalid form", http.StatusSeeOther)
 		return
 	}
 
 	// Get the URL
 	url := r.FormValue("url")
 	if url == "" {
-		http.Redirect(w, r, "/?error=URL is required", http.StatusSeeOther)
+		http.Redirect(w, r, "/dashboard?error=URL is required", http.StatusSeeOther)
 		return
-	}
-
-	// Get the user from the context (if any)
-	user := middleware.GetUserFromContext(r.Context())
-	var userID *int
-	if user != nil {
-		userID = &user.ID
 	}
 
 	// Shorten the URL
-	_, err := h.shortenerService.Shorten(r.Context(), url, userID)
+	_, err := h.shortenerService.Shorten(r.Context(), url, &user.ID)
 	if err != nil {
 		if err == services.ErrInvalidURL {
-			http.Redirect(w, r, "/?error=Invalid URL", http.StatusSeeOther)
+			http.Redirect(w, r, "/dashboard?error=Invalid URL", http.StatusSeeOther)
 			return
 		}
-		http.Redirect(w, r, "/?error=Failed to shorten URL", http.StatusSeeOther)
+		http.Redirect(w, r, "/dashboard?error=Failed to shorten URL", http.StatusSeeOther)
 		return
 	}
 
-	// Redirect to the home page
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+	// Redirect to the dashboard
+	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
 // renderTemplate renders a template
-func (h *Web) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
+func (h *Dashboard) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 	if err := h.templates.ExecuteTemplate(w, name, data); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -105,7 +109,7 @@ func (h *Web) renderTemplate(w http.ResponseWriter, name string, data interface{
 }
 
 // renderError renders an error page
-func (h *Web) renderError(w http.ResponseWriter, message string, status int) {
+func (h *Dashboard) renderError(w http.ResponseWriter, message string, status int) {
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(status)
 	data := struct {

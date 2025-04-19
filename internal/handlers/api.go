@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/services"
+	"github.com/gorilla/mux"
 )
 
 // API handles API requests
@@ -35,7 +35,7 @@ func (h *API) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Shorten the URL
-	response, err := h.shortenerService.Shorten(r.Context(), req.URL)
+	response, err := h.shortenerService.Shorten(r.Context(), req.URL, nil)
 	if err != nil {
 		if errors.Is(err, services.ErrInvalidURL) {
 			http.Error(w, "Invalid URL", http.StatusBadRequest)

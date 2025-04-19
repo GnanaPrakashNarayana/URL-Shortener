@@ -3,22 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Shortener</title>
+    <title>Dashboard - URL Shortener</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>URL Shortener</h1>
-            <div class="auth-links">
-                {{ if .User }}
-                    <span>Welcome, {{ .User.Username }}</span>
-                    <a href="/dashboard" class="btn-link">Dashboard</a>
-                    <a href="/auth/logout" class="btn-link">Logout</a>
-                {{ else }}
-                    <a href="/auth/login" class="btn-link">Login</a>
-                    <a href="/auth/register" class="btn-link">Register</a>
-                {{ end }}
+        <div class="dashboard-header">
+            <h1>Dashboard</h1>
+            <div class="user-info">
+                <span>Welcome, {{ .User.Username }}</span>
+                <a href="/auth/logout" class="btn-logout">Logout</a>
             </div>
         </div>
         
@@ -30,7 +24,7 @@
         {{ end }}
         
         <!-- URL shortening form -->
-        <form action="/shorten" method="post">
+        <form action="/dashboard/shorten" method="post">
             <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
             <div class="form-group">
                 <input type="url" name="url" placeholder="Enter URL to shorten" required>
@@ -38,8 +32,8 @@
             </div>
         </form>
         
-        <!-- List of shortened URLs -->
-        <h2>Recently Shortened URLs</h2>
+        <!-- List of user's shortened URLs -->
+        <h2>Your Shortened URLs</h2>
         <div class="url-list">
             {{ if .URLs }}
                 <table>
@@ -66,8 +60,12 @@
                     </tbody>
                 </table>
             {{ else }}
-                <p>No URLs have been shortened yet.</p>
+                <p>You haven't shortened any URLs yet.</p>
             {{ end }}
+        </div>
+        
+        <div class="dashboard-footer">
+            <a href="/" class="btn">Back to Home</a>
         </div>
     </div>
     

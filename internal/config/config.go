@@ -13,6 +13,7 @@ type Config struct {
 	Server    ServerConfig
 	Shortener ShortenerConfig
 	Database  DatabaseConfig
+	Auth      AuthConfig
 }
 
 // ServerConfig holds the server configuration
@@ -40,6 +41,36 @@ type DatabaseConfig struct {
 	ConnMaxLifetime int
 	// MigrationsPath is the path to the migrations directory
 	MigrationsPath string
+}
+
+// AuthConfig holds the authentication configuration
+type AuthConfig struct {
+	// JWT secret key
+	JWTSecret string
+	// JWT expiration time
+	JWTExpirationMinutes int
+	// Session cookie name
+	SessionCookieName string
+	// Session cookie secure flag
+	SessionCookieSecure bool
+	// Session cookie max age in seconds
+	SessionCookieMaxAge int
+	// CSRF Token
+	CSRFKey string
+	// OAuth providers
+	OAuth OAuthConfig
+}
+
+// OAuthConfig holds the OAuth providers configuration
+type OAuthConfig struct {
+	// Google OAuth
+	GoogleClientID     string
+	GoogleClientSecret string
+	GoogleRedirectURL  string
+	// GitHub OAuth
+	GitHubClientID     string
+	GitHubClientSecret string
+	GitHubRedirectURL  string
 }
 
 // Load loads the configuration from environment variables or .env file
@@ -77,6 +108,23 @@ func Load(configPath string) (*Config, error) {
 	connMaxLifetime, _ := strconv.Atoi(getEnv("DB_CONN_MAX_LIFETIME", "300"))
 	migrationsPath := getEnv("DB_MIGRATIONS_PATH", "migrations")
 
+	// Auth config
+	jwtSecret := getEnv("JWT_SECRET", "your-secret-key")
+	jwtExpirationMinutes, _ := strconv.Atoi(getEnv("JWT_EXPIRATION_MINUTES", "1440")) // 24 hours
+	sessionCookieName := getEnv("SESSION_COOKIE_NAME", "url_shortener_session")
+	sessionCookieSecure, _ := strconv.ParseBool(getEnv("SESSION_COOKIE_SECURE", "false"))
+	sessionCookieMaxAge, _ := strconv.Atoi(getEnv("SESSION_COOKIE_MAX_AGE", "86400")) // 24 hours
+	csrfKey := getEnv("CSRF_KEY", "32-byte-long-auth-key")
+
+	// OAuth config
+	googleClientID := getEnv("GOOGLE_CLIENT_ID", "")
+	googleClientSecret := getEnv("GOOGLE_CLIENT_SECRET", "")
+	googleRedirectURL := getEnv("GOOGLE_REDIRECT_URL", baseURL+"/auth/google/callback")
+
+	githubClientID := getEnv("GITHUB_CLIENT_ID", "")
+	githubClientSecret := getEnv("GITHUB_CLIENT_SECRET", "")
+	githubRedirectURL := getEnv("GITHUB_REDIRECT_URL", baseURL+"/auth/github/callback")
+
 	return &Config{
 		Server: ServerConfig{
 			Address: address,
@@ -92,6 +140,22 @@ func Load(configPath string) (*Config, error) {
 			MaxIdleConns:    maxIdleConns,
 			ConnMaxLifetime: connMaxLifetime,
 			MigrationsPath:  migrationsPath,
+		},
+		Auth: AuthConfig{
+			JWTSecret:            jwtSecret,
+			JWTExpirationMinutes: jwtExpirationMinutes,
+			SessionCookieName:    sessionCookieName,
+			SessionCookieSecure:  sessionCookieSecure,
+			SessionCookieMaxAge:  sessionCookieMaxAge,
+			CSRFKey:              csrfKey,
+			OAuth: OAuthConfig{
+				GoogleClientID:     googleClientID,
+				GoogleClientSecret: googleClientSecret,
+				GoogleRedirectURL:  googleRedirectURL,
+				GitHubClientID:     githubClientID,
+				GitHubClientSecret: githubClientSecret,
+				GitHubRedirectURL:  githubRedirectURL,
+			},
 		},
 	}, nil
 }

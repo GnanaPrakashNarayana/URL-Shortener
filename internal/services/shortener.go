@@ -36,7 +36,7 @@ func NewShortenerService(repo repository.Repository, baseURL string, keyLength i
 }
 
 // Shorten shortens a URL
-func (s *ShortenerService) Shorten(ctx context.Context, originalURL string) (*models.URLResponse, error) {
+func (s *ShortenerService) Shorten(ctx context.Context, originalURL string, userID *int) (*models.URLResponse, error) {
 	// Validate URL
 	if err := validateURL(originalURL); err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (s *ShortenerService) Shorten(ctx context.Context, originalURL string) (*mo
 	}
 
 	// Create a new URL
-	shortenedURL := models.NewURL(id, originalURL)
+	shortenedURL := models.NewURL(id, originalURL, userID)
 
 	// Store the URL
 	if err := s.repo.Store(ctx, shortenedURL); err != nil {
@@ -62,6 +62,7 @@ func (s *ShortenerService) Shorten(ctx context.Context, originalURL string) (*mo
 		OriginalURL: originalURL,
 		CreatedAt:   shortenedURL.CreatedAt,
 		Visits:      shortenedURL.Visits,
+		UserID:      userID,
 	}, nil
 }
 
@@ -98,6 +99,28 @@ func (s *ShortenerService) List(ctx context.Context) ([]*models.URLResponse, err
 			OriginalURL: u.OriginalURL,
 			CreatedAt:   u.CreatedAt,
 			Visits:      u.Visits,
+			UserID:      u.UserID,
+		})
+	}
+
+	return responses, nil
+}
+
+// ListByUserID lists all URLs for a user
+func (s *ShortenerService) ListByUserID(ctx context.Context, userID int) ([]*models.URLResponse, error) {
+	urls, err := s.repo.ListByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]*models.URLResponse, 0, len(urls))
+	for _, u := range urls {
+		responses = append(responses, &models.URLResponse{
+			ShortURL:    s.baseURL + "/" + u.ID,
+			OriginalURL: u.OriginalURL,
+			CreatedAt:   u.CreatedAt,
+			Visits:      u.Visits,
+			UserID:      u.UserID,
 		})
 	}
 

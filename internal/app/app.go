@@ -2,30 +2,40 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
 	"net/http"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/config"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/database"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/handlers"
+	"github.com/GnanaPrakashNarayana/url-shortener/internal/middleware"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/services"
+	"github.com/gorilla/csrf"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 )
 
 // App represents the application
 type App struct {
-	config     *config.Config
-	repo       repository.Repository
-	server     *http.Server
-	apiHandler *handlers.API
-	webHandler *handlers.Web
-	dbManager  *database.Manager
+	config         *config.Config
+	repo           repository.Repository
+	userRepo       repository.UserRepository
+	server         *http.Server
+	apiHandler     *handlers.API
+	webHandler     *handlers.Web
+	authHandler    *handlers.Auth
+	dashHandler    *handlers.Dashboard
+	dbManager      *database.Manager
+	authMiddleware *middleware.AuthMiddleware
+	sessionStore   *sessions.CookieStore
 }
 
 // New creates a new application
 func New(cfg *config.Config) (*App, error) {
 	var repo repository.Repository
+	var userRepo repository.UserRepository
 	var dbManager *database.Manager
 	var err error
 
@@ -53,17 +63,43 @@ func New(cfg *config.Config) (*App, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Create PostgreSQL user repository
+		userRepo, err = repository.NewPostgresUserRepository(db)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Fall back to memory repository
 		repo = repository.NewMemoryRepository()
+		userRepo = repository.NewMemoryUserRepository()
 	}
 
-	// Create shortener service
+	// Create session store
+	// Generate a random key for the session store
+	sessionKey := make([]byte, 32)
+	if _, err := rand.Read(sessionKey); err != nil {
+		return nil, err
+	}
+	sessionStore := sessions.NewCookieStore(sessionKey)
+	sessionStore.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   cfg.Auth.SessionCookieMaxAge,
+		HttpOnly: true,
+		Secure:   cfg.Auth.SessionCookieSecure,
+	}
+
+	// Create services
 	shortenerService := services.NewShortenerService(
 		repo,
 		cfg.Shortener.BaseURL,
 		cfg.Shortener.KeyLength,
 	)
+
+	authService := services.NewAuthService(userRepo, &cfg.Auth)
+
+	// Create auth middleware
+	authMiddleware := middleware.NewAuthMiddleware(authService, sessionStore, cfg.Auth.SessionCookieName)
 
 	// Create API handler
 	apiHandler := handlers.NewAPI(shortenerService)
@@ -74,13 +110,60 @@ func New(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
+	// Create auth handler
+	authHandler, err := handlers.NewAuth(authService, "templates", sessionStore, cfg.Auth.SessionCookieName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create dashboard handler
+	dashHandler, err := handlers.NewDashboard(shortenerService, "templates")
+	if err != nil {
+		return nil, err
+	}
+
 	// Create router
 	router := mux.NewRouter()
+
+	// Add auth middleware to all routes
+	router.Use(authMiddleware.Auth)
+
+	// CSRF protection
+	csrfMiddleware := csrf.Protect(
+		[]byte(cfg.Auth.CSRFKey),
+		csrf.Secure(false), // Set to false for local development
+		csrf.Path("/"),
+		csrf.SameSite(csrf.SameSiteLaxMode), // Add this line
+	)
+	router.Use(csrfMiddleware)
 
 	// API routes
 	apiRouter := router.PathPrefix("/api").Subrouter()
 	apiRouter.HandleFunc("/shorten", apiHandler.ShortenURL).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/urls", apiHandler.ListURLs).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/auth/login", authHandler.LoginAPI).Methods(http.MethodPost)
+
+	// Auth routes
+	authRouter := router.PathPrefix("/auth").Subrouter()
+	authRouter.HandleFunc("/register", authHandler.RegisterForm).Methods(http.MethodGet)
+	authRouter.HandleFunc("/register", authHandler.Register).Methods(http.MethodPost)
+	authRouter.HandleFunc("/login", authHandler.LoginForm).Methods(http.MethodGet)
+	authRouter.HandleFunc("/login", authHandler.Login).Methods(http.MethodPost)
+	authRouter.HandleFunc("/logout", authHandler.Logout).Methods(http.MethodGet)
+	authRouter.HandleFunc("/oauth/{provider}", authHandler.OAuthLogin).Methods(http.MethodGet)
+	authRouter.HandleFunc("/oauth/{provider}/callback", authHandler.OAuthCallback).Methods(http.MethodGet)
+
+	// Dashboard routes
+	dashRouter := router.PathPrefix("/dashboard").Subrouter()
+	dashRouter.Use(authMiddleware.RequireAuth)
+	dashRouter.HandleFunc("", dashHandler.Home).Methods(http.MethodGet)
+	dashRouter.HandleFunc("/", dashHandler.Home).Methods(http.MethodGet)
+	dashRouter.HandleFunc("/shorten", dashHandler.ShortenURL).Methods(http.MethodPost)
+
+	// Admin routes (example - not implemented yet)
+	adminRouter := router.PathPrefix("/admin").Subrouter()
+	adminRouter.Use(authMiddleware.RequireAdmin)
+	// adminRouter.HandleFunc("", adminHandler.Home).Methods(http.MethodGet)
 
 	// Web routes
 	router.HandleFunc("/", webHandler.Home).Methods(http.MethodGet)
@@ -97,12 +180,17 @@ func New(cfg *config.Config) (*App, error) {
 	}
 
 	return &App{
-		config:     cfg,
-		repo:       repo,
-		server:     server,
-		apiHandler: apiHandler,
-		webHandler: webHandler,
-		dbManager:  dbManager,
+		config:         cfg,
+		repo:           repo,
+		userRepo:       userRepo,
+		server:         server,
+		apiHandler:     apiHandler,
+		webHandler:     webHandler,
+		authHandler:    authHandler,
+		dashHandler:    dashHandler,
+		dbManager:      dbManager,
+		authMiddleware: authMiddleware,
+		sessionStore:   sessionStore,
 	}, nil
 }
 

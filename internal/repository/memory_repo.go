@@ -73,6 +73,21 @@ func (r *MemoryRepository) List(ctx context.Context) ([]*models.URL, error) {
 	return urls, nil
 }
 
+// ListByUserID lists all URLs for a user
+func (r *MemoryRepository) ListByUserID(ctx context.Context, userID int) ([]*models.URL, error) {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
+	
+	urls := make([]*models.URL, 0)
+	for _, url := range r.urls {
+		if url.UserID != nil && *url.UserID == userID {
+			urls = append(urls, url)
+		}
+	}
+	
+	return urls, nil
+}
+
 // Close closes the repository
 func (r *MemoryRepository) Close() error {
 	return nil

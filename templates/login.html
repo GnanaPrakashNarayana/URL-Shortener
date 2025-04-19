@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Login</h1>
+        
+        <!-- Error message -->
+        {{ if .Error }}
+        <div class="error">
+            {{ .Error }}
+        </div>
+        {{ end }}
+        
+        <!-- Login form -->
+        <div class="auth-form">
+            <form action="/auth/login" method="post">
+                <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
+                <input type="hidden" name="redirect" value="{{ .RedirectURL }}">
+                
+                <div class="form-group">
+                    <label for="username_or_email">Username or Email</label>
+                    <input type="text" id="username_or_email" name="username_or_email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn-auth">Login</button>
+                </div>
+            </form>
+            
+            <div class="auth-links">
+                <p>Don't have an account? <a href="/auth/register">Register</a></p>
+            </div>
+            
+            <!-- OAuth Login -->
+            {{ if or .GoogleAuth .GitHubAuth }}
+            <div class="oauth-section">
+                <h3>Or login with</h3>
+                <div class="oauth-buttons">
+                    {{ if .GoogleAuth }}
+                    <a href="/auth/oauth/google?redirect={{ .RedirectURL }}" class="oauth-btn google-btn">
+                        Google
+                    </a>
+                    {{ end }}
+                    
+                    {{ if .GitHubAuth }}
+                    <a href="/auth/oauth/github?redirect={{ .RedirectURL }}" class="oauth-btn github-btn">
+                        GitHub
+                    </a>
+                    {{ end }}
+                </div>
+            </div>
+            {{ end }}
+        </div>
+    </div>
+</body>
+</html>

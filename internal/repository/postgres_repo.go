@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"time" // We'll make sure to use this
+	"time"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/models"
 	_ "github.com/lib/pq" // PostgreSQL driver
@@ -42,12 +42,13 @@ func (r *PostgresRepository) Store(ctx context.Context, url *models.URL) error {
 	// Insert the URL - using time values for created_at and last_visit_at
 	_, err = tx.ExecContext(
 		ctx,
-		"INSERT INTO urls (id, original_url, created_at, visits, last_visit_at) VALUES ($1, $2, $3, $4, $5)",
+		"INSERT INTO urls (id, original_url, created_at, visits, last_visit_at, user_id) VALUES ($1, $2, $3, $4, $5, $6)",
 		url.ID,
 		url.OriginalURL,
-		url.CreatedAt,  // This uses time.Time
+		url.CreatedAt,
 		url.Visits,
-		lastVisitAt,    // This uses time.Time
+		lastVisitAt,
+		url.UserID,
 	)
 	if err != nil {
 		return err
@@ -61,18 +62,20 @@ func (r *PostgresRepository) Store(ctx context.Context, url *models.URL) error {
 func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*models.URL, error) {
 	// Query the URL
 	var url models.URL
-	var lastVisitAt sql.NullTime  // This uses time.Time
+	var lastVisitAt sql.NullTime
+	var userID sql.NullInt64
 
 	err := r.db.QueryRowContext(
 		ctx,
-		"SELECT id, original_url, created_at, visits, last_visit_at FROM urls WHERE id = $1",
+		"SELECT id, original_url, created_at, visits, last_visit_at, user_id FROM urls WHERE id = $1",
 		id,
 	).Scan(
 		&url.ID,
 		&url.OriginalURL,
-		&url.CreatedAt,     // This uses time.Time
+		&url.CreatedAt,
 		&url.Visits,
-		&lastVisitAt,       // This uses time.Time
+		&lastVisitAt,
+		&userID,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -83,9 +86,17 @@ func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*models.UR
 
 	// Set LastVisitAt if not NULL
 	if lastVisitAt.Valid {
-		url.LastVisitAt = lastVisitAt.Time  // This uses time.Time
+		url.LastVisitAt = lastVisitAt.Time
 	} else {
-		url.LastVisitAt = time.Time{}  // Using time package explicitly here
+		url.LastVisitAt = time.Time{}
+	}
+
+	// Set UserID if not NULL
+	if userID.Valid {
+		userId := int(userID.Int64)
+		url.UserID = &userId
+	} else {
+		url.UserID = nil
 	}
 
 	return &url, nil
@@ -105,16 +116,17 @@ func (r *PostgresRepository) Update(ctx context.Context, url *models.URL) error 
 	if url.LastVisitAt.IsZero() {
 		lastVisitAt = nil
 	} else {
-		lastVisitAt = url.LastVisitAt  // This uses time.Time
+		lastVisitAt = url.LastVisitAt
 	}
 
 	// Update the URL
 	result, err := tx.ExecContext(
 		ctx,
-		"UPDATE urls SET original_url = $1, visits = $2, last_visit_at = $3 WHERE id = $4",
+		"UPDATE urls SET original_url = $1, visits = $2, last_visit_at = $3, user_id = $4 WHERE id = $5",
 		url.OriginalURL,
 		url.Visits,
-		lastVisitAt,    // This uses time.Time
+		lastVisitAt,
+		url.UserID,
 		url.ID,
 	)
 	if err != nil {
@@ -139,7 +151,7 @@ func (r *PostgresRepository) List(ctx context.Context) ([]*models.URL, error) {
 	// Query all URLs
 	rows, err := r.db.QueryContext(
 		ctx,
-		"SELECT id, original_url, created_at, visits, last_visit_at FROM urls ORDER BY created_at DESC",
+		"SELECT id, original_url, created_at, visits, last_visit_at, user_id FROM urls ORDER BY created_at DESC",
 	)
 	if err != nil {
 		return nil, err
@@ -150,14 +162,16 @@ func (r *PostgresRepository) List(ctx context.Context) ([]*models.URL, error) {
 	urls := []*models.URL{}
 	for rows.Next() {
 		var url models.URL
-		var lastVisitAt sql.NullTime  // This uses time.Time
+		var lastVisitAt sql.NullTime
+		var userID sql.NullInt64
 
 		err := rows.Scan(
 			&url.ID,
 			&url.OriginalURL,
-			&url.CreatedAt,     // This uses time.Time
+			&url.CreatedAt,
 			&url.Visits,
-			&lastVisitAt,       // This uses time.Time
+			&lastVisitAt,
+			&userID,
 		)
 		if err != nil {
 			return nil, err
@@ -165,9 +179,74 @@ func (r *PostgresRepository) List(ctx context.Context) ([]*models.URL, error) {
 
 		// Set LastVisitAt if not NULL
 		if lastVisitAt.Valid {
-			url.LastVisitAt = lastVisitAt.Time  // This uses time.Time
+			url.LastVisitAt = lastVisitAt.Time
 		} else {
-			url.LastVisitAt = time.Time{}  // Using time package explicitly
+			url.LastVisitAt = time.Time{}
+		}
+
+		// Set UserID if not NULL
+		if userID.Valid {
+			userId := int(userID.Int64)
+			url.UserID = &userId
+		} else {
+			url.UserID = nil
+		}
+
+		urls = append(urls, &url)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return urls, nil
+}
+
+// ListByUserID lists all URLs for a user
+func (r *PostgresRepository) ListByUserID(ctx context.Context, userID int) ([]*models.URL, error) {
+	// Query all URLs for a user
+	rows, err := r.db.QueryContext(
+		ctx,
+		"SELECT id, original_url, created_at, visits, last_visit_at, user_id FROM urls WHERE user_id = $1 ORDER BY created_at DESC",
+		userID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Parse the rows
+	urls := []*models.URL{}
+	for rows.Next() {
+		var url models.URL
+		var lastVisitAt sql.NullTime
+		var userIDSql sql.NullInt64
+
+		err := rows.Scan(
+			&url.ID,
+			&url.OriginalURL,
+			&url.CreatedAt,
+			&url.Visits,
+			&lastVisitAt,
+			&userIDSql,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Set LastVisitAt if not NULL
+		if lastVisitAt.Valid {
+			url.LastVisitAt = lastVisitAt.Time
+		} else {
+			url.LastVisitAt = time.Time{}
+		}
+
+		// Set UserID if not NULL (it should always be valid in this case, but just to be safe)
+		if userIDSql.Valid {
+			userId := int(userIDSql.Int64)
+			url.UserID = &userId
+		} else {
+			url.UserID = nil
 		}
 
 		urls = append(urls, &url)

@@ -20,6 +20,9 @@ type Repository interface {
 	// List lists all URLs
 	List(ctx context.Context) ([]*models.URL, error)
 
+	// ListByUserID lists all URLs for a user
+	ListByUserID(ctx context.Context, userID int) ([]*models.URL, error)
+
 	// Close closes the repository
 	Close() error
 }
