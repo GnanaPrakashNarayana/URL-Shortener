@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/GnanaPrakashNarayana/url-shortener/internal/middleware"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/services"
 	"github.com/gorilla/mux"
@@ -26,7 +27,8 @@ func NewAPI(shortenerService *services.ShortenerService) *API {
 func (h *API) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	// Parse the request
 	var req struct {
-		URL string `json:"url"`
+		URL        string `json:"url"`
+		CustomSlug string `json:"custom_slug,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -34,14 +36,26 @@ func (h *API) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get user from context (if authenticated)
+	user := middleware.GetUserFromContext(r.Context())
+	var userID *int
+	if user != nil {
+		userID = &user.ID
+	}
+
 	// Shorten the URL
-	response, err := h.shortenerService.Shorten(r.Context(), req.URL, nil)
+	response, err := h.shortenerService.Shorten(r.Context(), req.URL, userID, req.CustomSlug)
 	if err != nil {
-		if errors.Is(err, services.ErrInvalidURL) {
+		switch {
+		case errors.Is(err, services.ErrInvalidURL):
 			http.Error(w, "Invalid URL", http.StatusBadRequest)
-			return
+		case errors.Is(err, services.ErrInvalidSlug):
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		case errors.Is(err, services.ErrSlugUnavailable):
+			http.Error(w, "Custom slug is already in use", http.StatusConflict)
+		default:
+			http.Error(w, "Failed to shorten URL", http.StatusInternalServerError)
 		}
-		http.Error(w, "Failed to shorten URL", http.StatusInternalServerError)
 		return
 	}
 

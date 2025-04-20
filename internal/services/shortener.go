@@ -6,6 +6,8 @@ import (
 	"errors"
 	"math/big"
 	"net/url"
+	"regexp"
+	"strings"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/models"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
@@ -16,8 +18,12 @@ const (
 	charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
-// ErrInvalidURL is returned when the provided URL is invalid
-var ErrInvalidURL = errors.New("invalid URL")
+// Common errors
+var (
+	ErrInvalidURL = errors.New("invalid URL")
+	ErrInvalidSlug = errors.New("invalid custom slug: must contain only letters, numbers, hyphens, and underscores")
+	ErrSlugUnavailable = errors.New("custom slug is already in use")
+)
 
 // ShortenerService is responsible for shortening URLs
 type ShortenerService struct {
@@ -35,17 +41,41 @@ func NewShortenerService(repo repository.Repository, baseURL string, keyLength i
 	}
 }
 
-// Shorten shortens a URL
-func (s *ShortenerService) Shorten(ctx context.Context, originalURL string, userID *int) (*models.URLResponse, error) {
+// Shorten shortens a URL, optionally with a custom slug
+func (s *ShortenerService) Shorten(ctx context.Context, originalURL string, userID *int, customSlug string) (*models.URLResponse, error) {
 	// Validate URL
 	if err := validateURL(originalURL); err != nil {
 		return nil, err
 	}
 
-	// Generate a unique ID
-	id, err := s.generateUniqueID(ctx)
-	if err != nil {
-		return nil, err
+	var id string
+	var err error
+
+	// Use custom slug if provided, otherwise generate a random ID
+	if customSlug != "" {
+		// Validate custom slug
+		if err := validateCustomSlug(customSlug); err != nil {
+			return nil, err
+		}
+
+		// Check if the slug is available
+		_, err := s.repo.GetByID(ctx, customSlug)
+		if err == nil {
+			// Slug already exists
+			return nil, ErrSlugUnavailable
+		} else if err != repository.ErrNotFound {
+			// Some other error occurred
+			return nil, err
+		}
+
+		// Slug is available
+		id = customSlug
+	} else {
+		// Generate a random ID
+		id, err = s.generateUniqueID(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Create a new URL
@@ -175,6 +205,32 @@ func validateURL(u string) error {
 
 	if parsed.Host == "" {
 		return ErrInvalidURL
+	}
+
+	return nil
+}
+
+// validateCustomSlug validates a custom slug
+func validateCustomSlug(slug string) error {
+	// Check if slug contains only allowed characters: letters, numbers, hyphens, and underscores
+	matched, err := regexp.MatchString("^[a-zA-Z0-9_-]+$", slug)
+	if err != nil {
+		return err
+	}
+
+	if !matched {
+		return ErrInvalidSlug
+	}
+
+	// Check for offensive words or other restrictions
+	// This is a simplified check - you might want to expand this
+	offensiveWords := []string{"admin", "login", "signup", "api"}
+	slugLower := strings.ToLower(slug)
+	
+	for _, word := range offensiveWords {
+		if slugLower == word {
+			return errors.New("this custom slug is not allowed")
+		}
 	}
 
 	return nil

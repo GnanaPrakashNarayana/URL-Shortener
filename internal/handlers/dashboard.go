@@ -78,21 +78,28 @@ func (h *Dashboard) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the URL
+	// Get the URL and custom slug
 	url := r.FormValue("url")
+	customSlug := r.FormValue("custom_slug")
+
 	if url == "" {
 		http.Redirect(w, r, "/dashboard?error=URL is required", http.StatusSeeOther)
 		return
 	}
 
 	// Shorten the URL
-	_, err := h.shortenerService.Shorten(r.Context(), url, &user.ID)
+	_, err := h.shortenerService.Shorten(r.Context(), url, &user.ID, customSlug)
 	if err != nil {
-		if err == services.ErrInvalidURL {
+		switch {
+		case err == services.ErrInvalidURL:
 			http.Redirect(w, r, "/dashboard?error=Invalid URL", http.StatusSeeOther)
-			return
+		case err == services.ErrInvalidSlug:
+			http.Redirect(w, r, "/dashboard?error="+err.Error(), http.StatusSeeOther)
+		case err == services.ErrSlugUnavailable:
+			http.Redirect(w, r, "/dashboard?error=Custom slug is already in use", http.StatusSeeOther)
+		default:
+			http.Redirect(w, r, "/dashboard?error=Failed to shorten URL", http.StatusSeeOther)
 		}
-		http.Redirect(w, r, "/dashboard?error=Failed to shorten URL", http.StatusSeeOther)
 		return
 	}
 

@@ -42,10 +42,14 @@
             <form action="/shorten" method="post" class="card">
                 <div class="card-body">
                     <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
-                    <div class="form-group">
+                    <div class="form-group url-input-group">
                         <input type="url" name="url" placeholder="Enter your long URL here" class="form-control url-input" required>
+                        <div class="custom-slug-input">
+                            <input type="text" name="custom_slug" placeholder="Custom slug (optional)" class="form-control" pattern="[a-zA-Z0-9_-]+" title="Only letters, numbers, hyphens and underscores allowed">
+                        </div>
                         <button type="submit" class="btn btn-primary url-input-btn">Shorten</button>
                     </div>
+                    <p class="custom-slug-hint">Leave custom slug empty to generate a random one</p>
                 </div>
             </form>
         </div>

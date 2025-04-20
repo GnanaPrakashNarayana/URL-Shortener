@@ -504,3 +504,48 @@ body.dark-mode {
 
 /* Add data-label attributes to your table cells in HTML for the responsive table */
 /* Example: <td data-label="Short URL">...</td> */
+/* Custom Slug Input Styles */
+.url-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.custom-slug-input {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.custom-slug-input::before {
+    content: "/";
+    font-size: 1.2rem;
+    color: var(--secondary-label-color);
+    margin-right: -5px;
+}
+
+.custom-slug-hint {
+    font-size: 0.8rem;
+    color: var(--secondary-label-color);
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+@media (min-width: 768px) {
+    .url-input-group {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+    
+    .url-input {
+        flex: 2;
+    }
+    
+    .custom-slug-input {
+        flex: 1;
+    }
+    
+    .url-input-btn {
+        align-self: flex-start;
+    }
+}

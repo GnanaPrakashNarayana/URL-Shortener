@@ -16,7 +16,7 @@ func TestShortenerService_Shorten(t *testing.T) {
 
 	// Test shortening a valid URL
 	ctx := context.Background()
-	resp, err := service.Shorten(ctx, "https://example.com", nil)
+	resp, err := service.Shorten(ctx, "https://example.com", nil, "")
 	if err != nil {
 		t.Fatalf("Failed to shorten URL: %v", err)
 	}
@@ -30,7 +30,7 @@ func TestShortenerService_Shorten(t *testing.T) {
 	}
 
 	// Test shortening an invalid URL
-	_, err = service.Shorten(ctx, "invalid-url", nil)
+	_, err = service.Shorten(ctx, "invalid-url", nil, "")
 	if err != ErrInvalidURL {
 		t.Errorf("Expected ErrInvalidURL, got %v", err)
 	}
@@ -45,7 +45,7 @@ func TestShortenerService_Get(t *testing.T) {
 
 	// Shorten a URL
 	ctx := context.Background()
-	resp, err := service.Shorten(ctx, "https://example.com", nil)
+	resp, err := service.Shorten(ctx, "https://example.com", nil, "")
 	if err != nil {
 		t.Fatalf("Failed to shorten URL: %v", err)
 	}
