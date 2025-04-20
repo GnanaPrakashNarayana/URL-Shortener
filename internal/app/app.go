@@ -29,9 +29,11 @@ type App struct {
 	webHandler     *handlers.Web
 	authHandler    *handlers.Auth
 	dashHandler    *handlers.Dashboard
+	qrCodeHandler  *handlers.QRCode
 	dbManager      *database.Manager
 	authMiddleware *middleware.AuthMiddleware
 	sessionStore   *sessions.CookieStore
+	qrCodeService  *services.QRCodeService
 }
 
 // New creates a new application
@@ -100,6 +102,9 @@ func New(cfg *config.Config) (*App, error) {
 
 	authService := services.NewAuthService(userRepo, &cfg.Auth)
 
+	// Create QR code service
+	qrCodeService := services.NewQRCodeService()
+
 	// Create auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService, sessionStore, cfg.Auth.SessionCookieName)
 
@@ -124,6 +129,12 @@ func New(cfg *config.Config) (*App, error) {
 
 	// Create dashboard handler
 	dashHandler, err := handlers.NewDashboard(shortenerService, "templates")
+	if err != nil {
+		return nil, err
+	}
+
+	// Create QR code handler
+	qrCodeHandler, err := handlers.NewQRCode(qrCodeService, "templates")
 	if err != nil {
 		return nil, err
 	}
@@ -170,6 +181,10 @@ func New(cfg *config.Config) (*App, error) {
 	dashRouter.HandleFunc("/", dashHandler.Home).Methods(http.MethodGet)
 	dashRouter.HandleFunc("/shorten", dashHandler.ShortenURL).Methods(http.MethodPost)
 
+	// QR Code routes
+	router.HandleFunc("/qrcode/generate", qrCodeHandler.Generate).Methods(http.MethodGet)
+	router.HandleFunc("/qrcode/preview/{id}", qrCodeHandler.Preview).Methods(http.MethodGet)
+
 	// Admin routes (example - not implemented yet)
 	adminRouter := router.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(authMiddleware.RequireAdmin)
@@ -202,9 +217,11 @@ func New(cfg *config.Config) (*App, error) {
 		webHandler:     webHandler,
 		authHandler:    authHandler,
 		dashHandler:    dashHandler,
+		qrCodeHandler:  qrCodeHandler,
 		dbManager:      dbManager,
 		authMiddleware: authMiddleware,
 		sessionStore:   sessionStore,
+		qrCodeService:  qrCodeService,
 	}, nil
 }
 

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code - URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="theme-color" content="#007aff">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="/" class="site-logo fade-in">Rapid URL</a>
+            <nav class="site-nav fade-in delay-1">
+                {{ if .User }}
+                    <span>Hi, {{ .User.Username }}</span>
+                    <a href="/dashboard" class="btn btn-secondary">Dashboard</a>
+                    <a href="/auth/logout" class="btn btn-link">Logout</a>
+                {{ else }}
+                    <a href="/" class="btn btn-secondary">Back to Home</a>
+                {{ end }}
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="qrcode-container fade-in">
+            <div class="card">
+                <div class="card-body qrcode-card">
+                    <h1 class="qrcode-title">QR Code for Your URL</h1>
+                    <p class="qrcode-description">Scan this QR code to access your shortened URL:<br>
+                        <a href="{{ .URL }}" target="_blank">{{ .URL }}</a>
+                    </p>
+                    
+                    <div class="qrcode-image-container">
+                        <img src="{{ .QRCodeBase64 }}" alt="QR Code" class="qrcode-image animate-scaleIn">
+                    </div>
+                    
+                    <div class="qrcode-actions">
+                        <a href="/qrcode/generate?url={{ .URL }}&format=png" class="btn btn-primary" download="qrcode.png">Download PNG</a>
+                        <a href="/qrcode/generate?url={{ .URL }}&format=svg" class="btn btn-secondary" download="qrcode.svg">Download SVG</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

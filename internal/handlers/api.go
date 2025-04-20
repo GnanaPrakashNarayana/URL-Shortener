@@ -3,8 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"net/http"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/middleware"
@@ -38,9 +41,51 @@ func (h *API) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		Password   string `json:"password,omitempty"`   // Optional password
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
+	// Check if this is a form submission or API request
+	if r.Header.Get("Content-Type") == "application/json" {
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+	} else {
+		// Parse form data
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "Invalid form data", http.StatusBadRequest)
+			return
+		}
+
+		req.URL = r.FormValue("url")
+		req.CustomSlug = r.FormValue("custom_slug")
+		req.Password = r.FormValue("password")
+
+		// Parse expiration time from form
+		expirationValue := r.FormValue("expiration_value")
+		expirationUnit := r.FormValue("expiration_unit")
+
+		if expirationValue != "" && expirationUnit != "" {
+			value, err := strconv.ParseInt(expirationValue, 10, 64)
+			if err != nil || value <= 0 {
+				http.Error(w, "Invalid expiration value", http.StatusBadRequest)
+				return
+			}
+
+			var multiplier int64
+			switch expirationUnit {
+			case "minutes":
+				multiplier = 60
+			case "hours":
+				multiplier = 60 * 60
+			case "days":
+				multiplier = 60 * 60 * 24
+			case "weeks":
+				multiplier = 60 * 60 * 24 * 7
+			default:
+				http.Error(w, "Invalid expiration unit", http.StatusBadRequest)
+				return
+			}
+
+			req.ExpiresIn = value * multiplier
+		}
 	}
 
 	// Get user from context (if authenticated)
@@ -70,6 +115,25 @@ func (h *API) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		default:
 			http.Error(w, "Failed to shorten URL", http.StatusInternalServerError)
 		}
+		return
+	}
+
+	// Check if QR code generation is requested
+	generateQR := r.FormValue("generate_qr") == "true"
+	qrFormat := r.FormValue("qr_format")
+	if qrFormat == "" {
+		qrFormat = "png"
+	}
+
+	// If QR code generation is requested and this is a form submission, redirect to QR code preview
+	if generateQR && r.Header.Get("Content-Type") != "application/json" {
+		// Extract ID from the short URL
+		id := filepath.Base(response.ShortURL)
+		baseURL := response.ShortURL[:len(response.ShortURL)-len(id)-1]
+
+		// Redirect to QR code preview
+		http.Redirect(w, r, fmt.Sprintf("/qrcode/preview/%s?base_url=%s&format=%s", 
+			id, baseURL, qrFormat), http.StatusSeeOther)
 		return
 	}
 

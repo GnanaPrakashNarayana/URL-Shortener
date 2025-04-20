@@ -327,3 +327,109 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// QR Code Toggle and Preview Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const qrToggle = document.getElementById('qr-code-toggle');
+    const qrPreview = document.querySelector('.qr-code-preview');
+    const urlInput = document.getElementById('url-input');
+    
+    if (qrToggle && qrPreview) {
+        qrToggle.addEventListener('change', function() {
+            if (this.checked) {
+                qrPreview.classList.add('active');
+                
+                // Only update preview if URL is valid
+                if (urlInput && urlInput.value && isValidURL(urlInput.value)) {
+                    updateQRPreview(urlInput.value);
+                }
+            } else {
+                qrPreview.classList.remove('active');
+            }
+        });
+    }
+    
+    // Update QR preview when URL changes
+    if (urlInput && qrPreview) {
+        urlInput.addEventListener('input', function() {
+            if (qrToggle && qrToggle.checked && isValidURL(this.value)) {
+                updateQRPreview(this.value);
+            }
+        });
+        
+        // Debounce function for performance
+        let typingTimer;
+        urlInput.addEventListener('keyup', function() {
+            clearTimeout(typingTimer);
+            if (qrToggle && qrToggle.checked && this.value) {
+                typingTimer = setTimeout(function() {
+                    if (isValidURL(urlInput.value)) {
+                        updateQRPreview(urlInput.value);
+                    }
+                }, 500);
+            }
+        });
+    }
+    
+    // Format change handler
+    const formatOptions = document.querySelectorAll('input[name="qr_format"]');
+    formatOptions.forEach(option => {
+        option.addEventListener('change', function() {
+            if (qrToggle && qrToggle.checked && urlInput && isValidURL(urlInput.value)) {
+                updateQRPreview(urlInput.value);
+            }
+        });
+    });
+    
+    // QR Code buttons in tables
+    const qrButtons = document.querySelectorAll('.qr-code-btn');
+    qrButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const url = this.getAttribute('data-url');
+            if (url) {
+                const id = url.split('/').pop();
+                window.location.href = `/qrcode/preview/${id}?base_url=${encodeURIComponent(url.replace('/' + id, ''))}`;
+            }
+        });
+    });
+});
+
+// Function to check if URL is valid
+function isValidURL(string) {
+    try {
+        new URL(string);
+        return true;
+    } catch (_) {
+        return false;
+    }
+}
+
+// Function to update QR preview
+function updateQRPreview(url) {
+    const qrPreviewImg = document.querySelector('.qr-preview-image');
+    if (!qrPreviewImg) return;
+    
+    // Get selected format
+    let format = 'png';
+    const formatOptions = document.querySelectorAll('input[name="qr_format"]');
+    formatOptions.forEach(option => {
+        if (option.checked) {
+            format = option.value;
+        }
+    });
+    
+    // Set loading state
+    qrPreviewImg.style.opacity = '0.5';
+    
+    // Create a temporary URL using the API
+    const apiUrl = `/qrcode/generate?url=${encodeURIComponent(url)}&format=${format}`;
+    
+    // Update preview with slight delay for animation effect
+    setTimeout(() => {
+        qrPreviewImg.src = apiUrl;
+        qrPreviewImg.style.opacity = '1';
+    }, 200);
+}

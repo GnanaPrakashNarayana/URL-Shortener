@@ -1088,3 +1088,298 @@ body.dark-mode .oauth-divider::after {
         min-width: 250px; /* Original URL column */
     }
 }
+
+/* QR Code styles */
+.qrcode-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-top: calc(var(--header-height) + 40px);
+}
+
+.qrcode-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+}
+
+.qrcode-title {
+    margin-bottom: 16px;
+    font-size: 1.75rem;
+}
+
+.qrcode-description {
+    margin-bottom: 32px;
+    color: var(--secondary-label-color);
+}
+
+.qrcode-image-container {
+    padding: 24px;
+    background-color: white;
+    border-radius: var(--border-radius-medium);
+    box-shadow: var(--shadow-subtle);
+    margin-bottom: 32px;
+    position: relative;
+    transition: transform var(--transition-speed-medium) cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow var(--transition-speed-medium) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.qrcode-image-container:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-card);
+}
+
+.qrcode-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    width: 256px;
+    height: 256px;
+}
+
+.qrcode-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* QR Code Toggle checkbox in form */
+.qr-code-toggle {
+    display: flex;
+    align-items: center;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.qr-code-toggle input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 50px;
+    height: 28px;
+    background-color: var(--fill-color);
+    border-radius: 34px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color var(--transition-speed-fast) ease;
+}
+
+.qr-code-toggle input[type="checkbox"]::before {
+    content: "";
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    background-color: white;
+    transition: transform var(--transition-speed-fast) cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.qr-code-toggle input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+}
+
+.qr-code-toggle input[type="checkbox"]:checked::before {
+    transform: translateX(22px);
+}
+
+.qr-code-toggle-label {
+    margin-left: 12px;
+    font-weight: 500;
+    color: var(--label-color);
+}
+
+/* QR Code Format options */
+.qr-code-format {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.qr-code-format-option {
+    display: flex;
+    align-items: center;
+}
+
+.qr-code-format-option input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--fill-color);
+    position: relative;
+    cursor: pointer;
+    border: 1px solid var(--tertiary-color);
+    transition: background-color var(--transition-speed-fast) ease;
+}
+
+.qr-code-format-option input[type="radio"]::before {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    background-color: var(--primary-color);
+    transform: scale(0);
+    transition: transform var(--transition-speed-fast) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.qr-code-format-option input[type="radio"]:checked::before {
+    transform: scale(1);
+}
+
+.qr-code-format-label {
+    margin-left: 8px;
+    font-size: 0.9rem;
+}
+
+/* QR Code Preview */
+.qr-code-preview {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-speed-medium) cubic-bezier(0.25, 0.1, 0.25, 1),
+                opacity var(--transition-speed-medium) cubic-bezier(0.25, 0.1, 0.25, 1),
+                margin var(--transition-speed-medium) cubic-bezier(0.25, 0.1, 0.25, 1);
+    opacity: 0;
+    margin-top: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.qr-code-preview.active {
+    max-height: 300px;
+    opacity: 1;
+    margin-top: 24px;
+    margin-bottom: 24px;
+}
+
+.qr-preview-image {
+    max-width: 150px;
+    height: auto;
+    background-color: white;
+    padding: 8px;
+    border-radius: var(--border-radius-small);
+    box-shadow: var(--shadow-subtle);
+}
+
+/* Add QR code button in URL table */
+.qr-code-btn {
+    background-color: var(--fill-color);
+    color: var(--primary-color);
+    border: none;
+    border-radius: var(--border-radius-small);
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all var(--transition-speed-fast) ease;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-left: 8px;
+}
+
+.qr-code-btn:hover {
+    background-color: var(--fill-hover);
+    filter: brightness(1.05);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .qrcode-card {
+        padding: 24px;
+    }
+    
+    .qrcode-image {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .qrcode-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .qr-code-preview.active {
+        max-height: 220px;
+    }
+    
+    .qr-preview-image {
+        max-width: 120px;
+    }
+}
+
+/* QR Code styles */
+.qrcode-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding-top: calc(var(--header-height) + 40px);
+}
+
+.qrcode-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+}
+
+.qrcode-title {
+    margin-bottom: 16px;
+    font-size: 1.75rem;
+}
+
+.qrcode-description {
+    margin-bottom: 32px;
+    color: var(--secondary-label-color);
+}
+
+.qrcode-image-container {
+    padding: 24px;
+    background-color: white;
+    border-radius: var(--border-radius-medium);
+    box-shadow: var(--shadow-subtle);
+    margin-bottom: 32px;
+    position: relative;
+    transition: transform var(--transition-speed-medium) cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow var(--transition-speed-medium) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.qrcode-image-container:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-card);
+}
+
+.qrcode-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    width: 256px;
+    height: 256px;
+}
+
+.qrcode-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .qrcode-card {
+        padding: 24px;
+    }
+    
+    .qrcode-image {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .qrcode-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+}

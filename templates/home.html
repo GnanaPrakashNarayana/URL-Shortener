@@ -49,6 +49,29 @@
                         <input type="url" id="url-input" name="url" placeholder="Enter your long URL here" class="form-control" required>
                     </div>
                     
+                    <!-- QR Code Toggle -->
+                    <div class="qr-code-toggle">
+                        <input type="checkbox" id="qr-code-toggle" name="generate_qr" value="true">
+                        <label for="qr-code-toggle" class="qr-code-toggle-label">Generate QR Code</label>
+                    </div>
+                    
+                    <!-- QR Code Preview (initially hidden) -->
+                    <div class="qr-code-preview">
+                        <img src="" alt="QR Code Preview" class="qr-preview-image">
+                    </div>
+                    
+                    <!-- QR Code Format Options (shown when QR Code is enabled) -->
+                    <div class="qr-code-format" id="qr-format-options">
+                        <div class="qr-code-format-option">
+                            <input type="radio" id="qr-format-png" name="qr_format" value="png" checked>
+                            <label for="qr-format-png" class="qr-code-format-label">PNG</label>
+                        </div>
+                        <div class="qr-code-format-option">
+                            <input type="radio" id="qr-format-svg" name="qr_format" value="svg">
+                            <label for="qr-format-svg" class="qr-code-format-label">SVG</label>
+                        </div>
+                    </div>
+                    
                     <!-- Advanced Options (collapsible) -->
                     <div class="advanced-options">
                         <button type="button" class="advanced-options-toggle">
@@ -119,6 +142,7 @@
                                         <div class="short-url-cell">
                                             <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
                                             <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
+                                            <button class="qr-code-btn" data-url="{{ .ShortURL }}">QR Code</button>
                                         </div>
                                     </td>
                                     <td>
