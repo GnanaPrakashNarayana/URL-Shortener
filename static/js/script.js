@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     // --- Ripple Effect ---
-    const buttons = document.querySelectorAll('.btn, .copy-btn, .oauth-btn'); // Added oauth-btn
+    const buttons = document.querySelectorAll('.btn, .copy-btn, .oauth-btn');
     buttons.forEach(button => {
         button.addEventListener('click', function(e) {
             // Clear existing ripples first
@@ -19,24 +19,22 @@ document.addEventListener('DOMContentLoaded', function() {
             ripple.style.left = `${x}px`;
             ripple.style.top = `${y}px`;
 
-            // Use requestAnimationFrame to ensure the element is added before animation starts
+            // Use requestAnimationFrame for smoother animation
             requestAnimationFrame(() => {
                 this.appendChild(ripple);
             });
 
-
             // Clean up ripple after animation
             setTimeout(() => {
-                if (ripple.parentNode) { // Check if still attached
+                if (ripple.parentNode) { 
                    ripple.remove();
                 }
             }, 600);
         });
     });
 
-
     // --- Form Validation & Animations ---
-    const forms = document.querySelectorAll('form.auth-form'); // Target auth forms specifically if needed
+    const forms = document.querySelectorAll('form');
     forms.forEach(form => {
         const requiredInputs = form.querySelectorAll('[required]');
 
@@ -53,12 +51,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Add new error message
                 const errorMsg = document.createElement('div');
                 errorMsg.className = 'error-msg';
-                errorMsg.textContent = message || 'This field is required'; // Default message
+                errorMsg.textContent = message || 'This field is required';
                 formGroup.appendChild(errorMsg);
 
                 // Add shake animation to the input
                 input.classList.add('shake');
-                 // Remove shake class after animation finishes
+                // Remove shake class after animation finishes
                 input.addEventListener('animationend', () => {
                     input.classList.remove('shake');
                 }, { once: true });
@@ -68,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Function to clear error message
         const clearError = (input) => {
             input.classList.remove('invalid');
-             input.classList.remove('shake'); // Ensure shake is removed
+            input.classList.remove('shake');
             const formGroup = input.closest('.form-group');
             if (formGroup) {
                 const errorMsg = formGroup.querySelector('.error-msg');
@@ -92,8 +90,8 @@ document.addEventListener('DOMContentLoaded', function() {
                      isValid = false;
                      showError(input, 'Please enter a valid email address.');
                 }
-                 // Add password confirmation check
-                 if (input.id === 'password_confirm') {
+                // Add password confirmation check
+                if (input.id === 'password_confirm') {
                     const passwordInput = form.querySelector('#password');
                     if (passwordInput && input.value !== passwordInput.value) {
                          isValid = false;
@@ -111,32 +109,35 @@ document.addEventListener('DOMContentLoaded', function() {
         requiredInputs.forEach(input => {
             input.addEventListener('input', function() {
                 // Clear error as user types
-                 if (this.classList.contains('invalid')) {
+                if (this.classList.contains('invalid')) {
                     clearError(this);
-                 }
+                }
             });
-             input.addEventListener('blur', function() {
+            
+            input.addEventListener('blur', function() {
                 // Optionally re-validate on blur
                 clearError(this); // Clear first
-                 if (this.hasAttribute('required') && !this.value.trim()) {
-                     showError(this);
-                 } else if (this.type === 'email' && this.value.trim() && !/\S+@\S+\.\S+/.test(this.value)) {
+                
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    showError(this);
+                } else if (this.type === 'email' && this.value.trim() && !/\S+@\S+\.\S+/.test(this.value)) {
                      showError(this, 'Please enter a valid email address.');
-                 } else if (this.id === 'password_confirm') {
+                } else if (this.id === 'password_confirm') {
                     const passwordInput = form.querySelector('#password');
                     if (passwordInput && this.value && this.value !== passwordInput.value) {
                          showError(this, 'Passwords do not match.');
                     }
                 }
-             });
+            });
         });
     });
 
-
-     // --- Copy Button Functionality (for home/dashboard pages) ---
+    // --- Copy Button Functionality ---
     const copyButtons = document.querySelectorAll('.copy-btn');
     copyButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent event bubbling
+            
             const url = this.getAttribute('data-url');
             if (!url) return;
 
@@ -144,57 +145,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Success feedback
                 const originalText = this.textContent;
                 this.textContent = 'Copied!';
-                this.style.backgroundColor = 'var(--success-color)'; // Use CSS variable
+                this.style.backgroundColor = 'var(--success-color)';
                 this.style.color = 'white';
-
-                 // Optional: Add a temporary success class
-                 this.classList.add('copied');
+                this.classList.add('copied');
 
                 // Reset button after a delay
                 setTimeout(() => {
                     this.textContent = originalText;
-                    this.style.backgroundColor = ''; // Revert to default
-                    this.style.color = ''; // Revert to default
-                     this.classList.remove('copied');
-                }, 1500); // Shorter duration
+                    this.style.backgroundColor = '';
+                    this.style.color = '';
+                    this.classList.remove('copied');
+                }, 1500);
             }).catch(err => {
                 console.error('Failed to copy URL: ', err);
-                // Optional: Show error feedback to the user
             });
         });
     });
 
-
-    // --- Remove fade-in and other general page animations from JS ---
-    // CSS now handles the entry animations for auth pages.
-    // If you need JS-driven animations for other pages (like scroll-triggered), keep that logic.
-    // For example, the original script had IntersectionObserver logic.
-    // If you want animations on the home/dashboard pages, keep or adapt that section.
-    // Example: Keep scroll animations for cards on other pages
-    const animateOnScroll = () => {
-        const cards = document.querySelectorAll('.card:not(.auth-card), .stat-card'); // Exclude auth-card
-        const screenPosition = window.innerHeight / 1.2; // Adjust trigger point
-
-        cards.forEach(card => {
-            const cardPosition = card.getBoundingClientRect().top;
-            if (!card.classList.contains('animated') && cardPosition < screenPosition) {
-                card.classList.add('animated', 'animate-fadeInUp'); // Use fadeInUp or scaleIn
-            }
-        });
-    };
-
-    // Initial check and add scroll listener if non-auth cards exist
-     if (document.querySelector('.card:not(.auth-card), .stat-card')) {
-        animateOnScroll(); // Run on load
-        window.addEventListener('scroll', animateOnScroll);
-    }
-
-    // Advanced Options Toggle - FIX
+    // --- Advanced Options Toggle - IMPROVED ---
     const advancedOptionsToggles = document.querySelectorAll('.advanced-options-toggle');
     
     advancedOptionsToggles.forEach(toggle => {
         toggle.addEventListener('click', function(e) {
-            e.preventDefault(); // Prevent default button behavior
+            e.preventDefault(); 
+            e.stopPropagation();
             
             // Find the parent .advanced-options element
             const parent = this.closest('.advanced-options');
@@ -206,60 +180,150 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Toggle active class on both the button and content
             this.classList.toggle('active');
-            content.classList.toggle('active');
             
-            // Change the toggle icon
-            const icon = this.querySelector('.toggle-icon');
-            if (icon) {
-                icon.textContent = this.classList.contains('active') ? '−' : '+';
+            if (this.classList.contains('active')) {
+                // Open the advanced options with a smooth animation
+                content.classList.add('active');
+                // Update the icon
+                const icon = this.querySelector('.toggle-icon');
+                if (icon) {
+                    icon.textContent = '−';
+                }
+                
+                // Scroll to show the content if needed
+                setTimeout(() => {
+                    const rect = content.getBoundingClientRect();
+                    const isVisible = (
+                        rect.top >= 0 &&
+                        rect.bottom <= window.innerHeight
+                    );
+                    
+                    if (!isVisible) {
+                        content.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest'
+                        });
+                    }
+                }, 300); // Wait for animation to start
+            } else {
+                // Close the advanced options
+                content.classList.remove('active');
+                // Update the icon
+                const icon = this.querySelector('.toggle-icon');
+                if (icon) {
+                    icon.textContent = '+';
+                }
             }
         });
     });
 
-    // Expiry date tooltips
-    const expiryDates = document.querySelectorAll('.expiry-date');
-    expiryDates.forEach(date => {
-        // Initialize any tooltips or special handling for expiry dates
-        // This is a placeholder for any future tooltip library integration
-    });
+    // Initial check for animations on page elements
+    const animateOnScroll = () => {
+        const cards = document.querySelectorAll('.card:not(.auth-card), .stat-card');
+        const screenPosition = window.innerHeight / 1.2;
 
-}); // End DOMContentLoaded
+        cards.forEach(card => {
+            const cardPosition = card.getBoundingClientRect().top;
+            if (!card.classList.contains('animated') && cardPosition < screenPosition) {
+                card.classList.add('animated', 'animate-fadeInUp');
+            }
+        });
+    };
+
+    // Run animation check on page load and scroll
+    if (document.querySelector('.card:not(.auth-card), .stat-card')) {
+        animateOnScroll();
+        window.addEventListener('scroll', animateOnScroll);
+    }
+
+    // Make tables responsive
+    const tables = document.querySelectorAll('.urls-table');
+    if (tables.length > 0) {
+        // Add horizontal scrolling container if needed
+        tables.forEach(table => {
+            const wrapper = table.parentElement;
+            if (!wrapper.classList.contains('table-responsive') && window.innerWidth <= 768) {
+                wrapper.style.overflowX = 'auto';
+                wrapper.style.WebkitOverflowScrolling = 'touch';
+                wrapper.style.marginBottom = '1rem';
+            }
+        });
+    }
+});
 
 // Password Toggle Functionality
 document.addEventListener('DOMContentLoaded', function() {
     const passwordInputs = document.querySelectorAll('input[type="password"]');
     
     passwordInputs.forEach(input => {
-        // Create toggle button
-        const toggleBtn = document.createElement('button');
-        toggleBtn.type = 'button';
-        toggleBtn.className = 'password-toggle';
-        toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-        
-        // Create a wrapper for the input
-        const wrapper = document.createElement('div');
-        wrapper.className = 'password-input-group';
-        
-        // Insert the wrapper before the input
-        input.parentNode.insertBefore(wrapper, input);
-        
-        // Move the input into the wrapper
-        wrapper.appendChild(input);
-        
-        // Add the toggle button to the wrapper
-        wrapper.appendChild(toggleBtn);
-        
-        // Add click event to toggle password visibility
-        toggleBtn.addEventListener('click', function() {
-            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-            input.setAttribute('type', type);
+        // Create toggle button if not already present
+        if (!input.parentNode.classList.contains('password-input-group')) {
+            // Create wrapper for the input
+            const wrapper = document.createElement('div');
+            wrapper.className = 'password-input-group';
             
-            // Change the icon based on visibility
-            if (type === 'text') {
-                this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
-            } else {
-                this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+            // Insert the wrapper before the input
+            input.parentNode.insertBefore(wrapper, input);
+            
+            // Move the input into the wrapper
+            wrapper.appendChild(input);
+            
+            // Create toggle button
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'password-toggle';
+            toggleBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+            
+            // Add the toggle button to the wrapper
+            wrapper.appendChild(toggleBtn);
+            
+            // Add click event to toggle password visibility
+            toggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                
+                // Change the icon based on visibility
+                if (type === 'text') {
+                    this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>';
+                } else {
+                    this.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+                }
+            });
+        }
+    });
+
+    // Calculate totals for dashboard stats when needed
+    if (document.getElementById('totalVisits')) {
+        updateStats();
+    }
+
+    function updateStats() {
+        const visitCounts = document.querySelectorAll('.visit-count');
+        let totalVisits = 0;
+        
+        visitCounts.forEach(function(element) {
+            totalVisits += parseInt(element.getAttribute('data-visits') || 0);
+        });
+        
+        const totalVisitsElement = document.getElementById('totalVisits');
+        if (totalVisitsElement) {
+            totalVisitsElement.textContent = totalVisits;
+        }
+        
+        // Calculate active links
+        const expiryDates = document.querySelectorAll('.expiry-date');
+        let activeLinks = 0;
+        
+        expiryDates.forEach(function(element) {
+            if (element.getAttribute('data-expired') !== 'true') {
+                activeLinks++;
             }
         });
-    });
+        
+        const activeLinksElement = document.getElementById('activeLinks');
+        if (activeLinksElement) {
+            activeLinksElement.textContent = activeLinks;
+        }
+    }
 });

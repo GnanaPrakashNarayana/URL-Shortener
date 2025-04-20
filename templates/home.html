@@ -100,49 +100,53 @@
         <div class="url-list fade-in delay-4">
             {{ if .URLs }}
                 <div class="card">
-                    <table class="urls-table">
-                        <thead>
-                            <tr>
-                                <th>Short URL</th>
-                                <th>Original URL</th>
-                                <th>Created</th>
-                                <th>Expires</th>
-                                <th>Protection</th>
-                                <th>Visits</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{ range .URLs }}
-                            <tr class="url-row">
-                                <td>
-                                    <div class="short-url-cell">
-                                        <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
-                                        <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="original-url" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                                        <a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a>
-                                    </div>
-                                </td>
-                                <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
-                                <td>
-                                    <span class="expiry-date {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired{{ end }}" title="{{ formatExpiryDate .ExpiresAt }}">
-                                        {{ timeUntil .ExpiresAt }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {{ if .IsPasswordProtected }}
-                                    <span class="badge password-protected">Password Protected</span>
-                                    {{ else }}
-                                    <span class="badge">None</span>
-                                    {{ end }}
-                                </td>
-                                <td>{{ .Visits }}</td>
-                            </tr>
-                            {{ end }}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table class="urls-table">
+                            <thead>
+                                <tr>
+                                    <th>Short URL</th>
+                                    <th>Original URL</th>
+                                    <th>Created</th>
+                                    <th>Expires</th>
+                                    <th>Protection</th>
+                                    <th>Visits</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ range .URLs }}
+                                <tr class="url-row {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired-row{{ end }}">
+                                    <td>
+                                        <div class="short-url-cell">
+                                            <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
+                                            <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="original-url">
+                                            <a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a>
+                                        </div>
+                                    </td>
+                                    <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                                    <td>
+                                        <span class="expiry-date {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired{{ end }}" 
+                                              title="{{ formatExpiryDate .ExpiresAt }}" 
+                                              data-expired="{{ if and .ExpiresAt (hasExpired .ExpiresAt) }}true{{ else }}false{{ end }}">
+                                            {{ timeUntil .ExpiresAt }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ if .IsPasswordProtected }}
+                                        <span class="badge password-protected">Password Protected</span>
+                                        {{ else }}
+                                        <span class="badge">None</span>
+                                        {{ end }}
+                                    </td>
+                                    <td class="visit-count" data-visits="{{ .Visits }}">{{ .Visits }}</td>
+                                </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             {{ else }}
                 <div class="card">
