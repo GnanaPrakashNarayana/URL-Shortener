@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="theme-color" content="#0071e3">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="/" class="site-logo fade-in">Rapid URL</a>
+            <nav class="site-nav fade-in delay-1">
+                {{ if .User }}
+                    <span>Hi, {{ .User.Username }}</span>
+                    <a href="/dashboard" class="btn btn-secondary">Dashboard</a>
+                    <a href="/auth/logout" class="btn btn-link">Logout</a>
+                {{ else }}
+                    <a href="/auth/login" class="btn btn-secondary">Login</a>
+                    <a href="/auth/register" class="btn btn-primary">Register</a>
+                {{ end }}
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-header fade-in">
+            <h1 class="page-title">Shorten Your Links</h1>
+            <p class="page-description">Transform long URLs into short, memorable links that are easy to share.</p>
+        </div>
+        
+        <!-- Error message -->
+        {{ if .Error }}
+        <div class="error fade-in delay-1">
+            {{ .Error }}
+        </div>
+        {{ end }}
+        
+       <!-- URL shortening form -->
+        <div class="url-shortener-form fade-in delay-2">
+            <form action="/shorten" method="post" class="card">
+                <div class="card-body">
+                    <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
+                    
+                    <!-- URL Input -->
+                    <div class="form-group">
+                        <label for="url-input" class="form-label">URL to Shorten</label>
+                        <input type="url" id="url-input" name="url" placeholder="Enter your long URL here" class="form-control" required>
+                    </div>
+                    
+                    <!-- Advanced Options (collapsible) -->
+                    <div class="advanced-options">
+                        <button type="button" class="advanced-options-toggle">
+                            <span class="toggle-icon">+</span> Advanced Options
+                        </button>
+                        
+                        <div class="advanced-options-content">
+                            <!-- Custom Slug -->
+                            <div class="form-group">
+                                <label for="custom-slug" class="form-label">Custom Slug (Optional)</label>
+                                <div class="custom-slug-input">
+                                    <span class="prefix">/</span>
+                                    <input type="text" id="custom-slug" name="custom_slug" placeholder="yourbrand" class="form-control" pattern="[a-zA-Z0-9_-]+" title="Only letters, numbers, hyphens and underscores allowed">
+                                </div>
+                                <p class="input-hint">Use only letters, numbers, hyphens, and underscores</p>
+                            </div>
+                            
+                            <!-- Expiration -->
+                            <div class="form-group">
+                                <label for="expiration-value" class="form-label">Link Expiration (Optional)</label>
+                                <div class="expiration-input">
+                                    <input type="number" id="expiration-value" name="expiration_value" min="1" placeholder="30" class="form-control">
+                                    <select name="expiration_unit" id="expiration-unit" class="form-control">
+                                        <option value="minutes">Minutes</option>
+                                        <option value="hours">Hours</option>
+                                        <option value="days" selected>Days</option>
+                                        <option value="weeks">Weeks</option>
+                                    </select>
+                                </div>
+                                <p class="input-hint">Leave empty for a permanent link</p>
+                            </div>
+                            
+                            <!-- Password Protection -->
+                            <div class="form-group">
+                                <label for="password" class="form-label">Password Protection (Optional)</label>
+                                <input type="password" id="password" name="password" placeholder="Leave empty for no password" class="form-control">
+                                <p class="input-hint">Requires users to enter a password before accessing the link</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">Shorten URL</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- List of shortened URLs -->
+        <h2 class="fade-in delay-3">Recently Shortened URLs</h2>
+        <div class="url-list fade-in delay-4">
+            {{ if .URLs }}
+                <div class="card">
+                    <table class="urls-table">
+                        <thead>
+                            <tr>
+                                <th>Short URL</th>
+                                <th>Original URL</th>
+                                <th>Created</th>
+                                <th>Expires</th>
+                                <th>Protection</th>
+                                <th>Visits</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{ range .URLs }}
+                            <tr class="url-row">
+                                <td>
+                                    <div class="short-url-cell">
+                                        <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
+                                        <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="original-url" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        <a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a>
+                                    </div>
+                                </td>
+                                <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                                <td>
+                                    <span class="expiry-date {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired{{ end }}" title="{{ formatExpiryDate .ExpiresAt }}">
+                                        {{ timeUntil .ExpiresAt }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {{ if .IsPasswordProtected }}
+                                    <span class="badge password-protected">Password Protected</span>
+                                    {{ else }}
+                                    <span class="badge">None</span>
+                                    {{ end }}
+                                </td>
+                                <td>{{ .Visits }}</td>
+                            </tr>
+                            {{ end }}
+                        </tbody>
+                    </table>
+                </div>
+            {{ else }}
+                <div class="card">
+                    <div class="card-body" style="text-align: center; padding: 60px 0;">
+                        <p>No URLs have been shortened yet.</p>
+                        <p>Be the first one to shorten a URL!</p>
+                    </div>
+                </div>
+            {{ end }}
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

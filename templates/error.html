@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="theme-color" content="#0071e3">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="/" class="site-logo fade-in">Rapid URL</a>
+        </div>
+    </header>
+
+    <div class="error-page fade-in">
+        <div class="error-code">{{ .Status }}</div>
+        <div class="error-message">{{ .Message }}</div>
+        <a href="/" class="btn btn-primary">Back to Home</a>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
