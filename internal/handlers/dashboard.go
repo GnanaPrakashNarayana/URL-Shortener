@@ -91,6 +91,7 @@ func (h *Dashboard) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	customSlug := r.FormValue("custom_slug")
 	expirationUnit := r.FormValue("expiration_unit")
 	expirationValue := r.FormValue("expiration_value")
+	password := r.FormValue("password") // Get password value
 
 	if url == "" {
 		http.Redirect(w, r, "/dashboard?error=URL is required", http.StatusSeeOther)
@@ -125,7 +126,7 @@ func (h *Dashboard) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Shorten the URL
-	_, err := h.shortenerService.Shorten(r.Context(), url, &user.ID, customSlug, expiresIn)
+	_, err := h.shortenerService.Shorten(r.Context(), url, &user.ID, customSlug, expiresIn, password)
 	if err != nil {
 		switch {
 		case err == services.ErrInvalidURL:

@@ -100,6 +100,13 @@
                                 </div>
                                 <p class="input-hint">Leave empty for a permanent link</p>
                             </div>
+                            
+                            <!-- Password Protection -->
+                            <div class="form-group">
+                                <label for="password" class="form-label">Password Protection (Optional)</label>
+                                <input type="password" id="password" name="password" placeholder="Leave empty for no password" class="form-control">
+                                <p class="input-hint">Requires users to enter a password before accessing the link</p>
+                            </div>
                         </div>
                     </div>
                     
@@ -120,6 +127,7 @@
                                 <th>Original URL</th>
                                 <th>Created</th>
                                 <th>Expires</th>
+                                <th>Protection</th>
                                 <th>Visits</th>
                             </tr>
                         </thead>
@@ -144,6 +152,13 @@
                                           data-expired="{{ if and .ExpiresAt (hasExpired .ExpiresAt) }}true{{ else }}false{{ end }}">
                                         {{ timeUntil .ExpiresAt }}
                                     </span>
+                                </td>
+                                <td>
+                                    {{ if .IsPasswordProtected }}
+                                    <span class="badge password-protected">Password Protected</span>
+                                    {{ else }}
+                                    <span class="badge">None</span>
+                                    {{ end }}
                                 </td>
                                 <td class="visit-count" data-visits="{{ .Visits }}">{{ .Visits }}</td>
                             </tr>

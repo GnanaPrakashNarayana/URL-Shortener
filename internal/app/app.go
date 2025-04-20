@@ -3,7 +3,9 @@ package app
 import (
 	"context"
 	"crypto/rand"
+	"html/template"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/config"
@@ -102,7 +104,11 @@ func New(cfg *config.Config) (*App, error) {
 	authMiddleware := middleware.NewAuthMiddleware(authService, sessionStore, cfg.Auth.SessionCookieName)
 
 	// Create API handler
-	apiHandler := handlers.NewAPI(shortenerService)
+	apiTemplates, err := template.New("").Funcs(handlers.GetTemplateFuncs()).ParseGlob(filepath.Join("templates", "*.html"))
+	if err != nil {
+		return nil, err
+	}
+	apiHandler := handlers.NewAPI(shortenerService, apiTemplates)
 
 	// Create web handler
 	webHandler, err := handlers.NewWeb(shortenerService, "templates")
@@ -173,6 +179,10 @@ func New(cfg *config.Config) (*App, error) {
 	router.HandleFunc("/", webHandler.Home).Methods(http.MethodGet)
 	router.HandleFunc("/shorten", webHandler.ShortenURL).Methods(http.MethodPost)
 	router.HandleFunc("/{id}", apiHandler.RedirectURL).Methods(http.MethodGet)
+
+	// Password verification routes
+	router.HandleFunc("/password/{id}", apiHandler.PasswordForm).Methods(http.MethodGet)
+	router.HandleFunc("/verify-password/{id}", apiHandler.VerifyPassword).Methods(http.MethodPost)
 
 	// Static files
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
