@@ -37,19 +37,53 @@
         </div>
         {{ end }}
         
-        <!-- URL shortening form -->
+       <!-- URL shortening form -->
         <div class="url-shortener-form fade-in delay-2">
             <form action="/shorten" method="post" class="card">
                 <div class="card-body">
                     <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
-                    <div class="form-group url-input-group">
-                        <input type="url" name="url" placeholder="Enter your long URL here" class="form-control url-input" required>
-                        <div class="custom-slug-input">
-                            <input type="text" name="custom_slug" placeholder="Custom slug (optional)" class="form-control" pattern="[a-zA-Z0-9_-]+" title="Only letters, numbers, hyphens and underscores allowed">
-                        </div>
-                        <button type="submit" class="btn btn-primary url-input-btn">Shorten</button>
+                    
+                    <!-- URL Input -->
+                    <div class="form-group">
+                        <label for="url-input" class="form-label">URL to Shorten</label>
+                        <input type="url" id="url-input" name="url" placeholder="Enter your long URL here" class="form-control" required>
                     </div>
-                    <p class="custom-slug-hint">Leave custom slug empty to generate a random one</p>
+                    
+                    <!-- Advanced Options (collapsible) -->
+                    <div class="advanced-options">
+                        <button type="button" class="advanced-options-toggle">
+                            <span class="toggle-icon">+</span> Advanced Options
+                        </button>
+                        
+                        <div class="advanced-options-content">
+                            <!-- Custom Slug -->
+                            <div class="form-group">
+                                <label for="custom-slug" class="form-label">Custom Slug (Optional)</label>
+                                <div class="custom-slug-input">
+                                    <span class="prefix">/</span>
+                                    <input type="text" id="custom-slug" name="custom_slug" placeholder="yourbrand" class="form-control" pattern="[a-zA-Z0-9_-]+" title="Only letters, numbers, hyphens and underscores allowed">
+                                </div>
+                                <p class="input-hint">Use only letters, numbers, hyphens, and underscores</p>
+                            </div>
+                            
+                            <!-- Expiration -->
+                            <div class="form-group">
+                                <label for="expiration-value" class="form-label">Link Expiration (Optional)</label>
+                                <div class="expiration-input">
+                                    <input type="number" id="expiration-value" name="expiration_value" min="1" placeholder="30" class="form-control">
+                                    <select name="expiration_unit" id="expiration-unit" class="form-control">
+                                        <option value="minutes">Minutes</option>
+                                        <option value="hours">Hours</option>
+                                        <option value="days" selected>Days</option>
+                                        <option value="weeks">Weeks</option>
+                                    </select>
+                                </div>
+                                <p class="input-hint">Leave empty for a permanent link</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">Shorten URL</button>
                 </div>
             </form>
         </div>
@@ -65,6 +99,7 @@
                                 <th>Short URL</th>
                                 <th>Original URL</th>
                                 <th>Created</th>
+                                <th>Expires</th>
                                 <th>Visits</th>
                             </tr>
                         </thead>
@@ -83,6 +118,11 @@
                                     </div>
                                 </td>
                                 <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                                <td>
+                                    <span class="expiry-date {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired{{ end }}" title="{{ formatExpiryDate .ExpiresAt }}">
+                                        {{ timeUntil .ExpiresAt }}
+                                    </span>
+                                </td>
                                 <td>{{ .Visits }}</td>
                             </tr>
                             {{ end }}

@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"net/http"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/middleware"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/models"
@@ -19,8 +21,14 @@ type Dashboard struct {
 
 // NewDashboard creates a new dashboard handler
 func NewDashboard(shortenerService *services.ShortenerService, templatesDir string) (*Dashboard, error) {
-	// Parse templates with custom functions
-	templates, err := template.New("").Funcs(GetTemplateFuncs()).ParseGlob(filepath.Join(templatesDir, "*.html"))
+	// Create a new template with functions
+	tmpl := template.New("")
+	
+	// Add template functions
+	tmpl = tmpl.Funcs(GetTemplateFuncs())
+	
+	// Parse templates
+	templates, err := tmpl.ParseGlob(filepath.Join(templatesDir, "*.html"))
 	if err != nil {
 		return nil, err
 	}
@@ -81,14 +89,43 @@ func (h *Dashboard) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	// Get the URL and custom slug
 	url := r.FormValue("url")
 	customSlug := r.FormValue("custom_slug")
+	expirationUnit := r.FormValue("expiration_unit")
+	expirationValue := r.FormValue("expiration_value")
 
 	if url == "" {
 		http.Redirect(w, r, "/dashboard?error=URL is required", http.StatusSeeOther)
 		return
 	}
 
+	// Parse expiration time
+	var expiresIn *time.Duration
+	if expirationValue != "" && expirationUnit != "" {
+		value, err := strconv.ParseInt(expirationValue, 10, 64)
+		if err != nil || value <= 0 {
+			http.Redirect(w, r, "/dashboard?error=Invalid expiration value", http.StatusSeeOther)
+			return
+		}
+
+		var duration time.Duration
+		switch expirationUnit {
+		case "minutes":
+			duration = time.Duration(value) * time.Minute
+		case "hours":
+			duration = time.Duration(value) * time.Hour
+		case "days":
+			duration = time.Duration(value) * 24 * time.Hour
+		case "weeks":
+			duration = time.Duration(value) * 7 * 24 * time.Hour
+		default:
+			http.Redirect(w, r, "/dashboard?error=Invalid expiration unit", http.StatusSeeOther)
+			return
+		}
+
+		expiresIn = &duration
+	}
+
 	// Shorten the URL
-	_, err := h.shortenerService.Shorten(r.Context(), url, &user.ID, customSlug)
+	_, err := h.shortenerService.Shorten(r.Context(), url, &user.ID, customSlug, expiresIn)
 	if err != nil {
 		switch {
 		case err == services.ErrInvalidURL:
@@ -111,7 +148,7 @@ func (h *Dashboard) ShortenURL(w http.ResponseWriter, r *http.Request) {
 func (h *Dashboard) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 	if err := h.templates.ExecuteTemplate(w, name, data); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 

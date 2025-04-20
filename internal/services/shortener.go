@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/models"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
@@ -23,6 +24,7 @@ var (
 	ErrInvalidURL = errors.New("invalid URL")
 	ErrInvalidSlug = errors.New("invalid custom slug: must contain only letters, numbers, hyphens, and underscores")
 	ErrSlugUnavailable = errors.New("custom slug is already in use")
+	ErrURLExpired = errors.New("URL has expired")
 )
 
 // ShortenerService is responsible for shortening URLs
@@ -41,8 +43,8 @@ func NewShortenerService(repo repository.Repository, baseURL string, keyLength i
 	}
 }
 
-// Shorten shortens a URL, optionally with a custom slug
-func (s *ShortenerService) Shorten(ctx context.Context, originalURL string, userID *int, customSlug string) (*models.URLResponse, error) {
+// Shorten shortens a URL, optionally with a custom slug and expiration time
+func (s *ShortenerService) Shorten(ctx context.Context, originalURL string, userID *int, customSlug string, expiresIn *time.Duration) (*models.URLResponse, error) {
 	// Validate URL
 	if err := validateURL(originalURL); err != nil {
 		return nil, err
@@ -78,8 +80,15 @@ func (s *ShortenerService) Shorten(ctx context.Context, originalURL string, user
 		}
 	}
 
+	// Calculate expiration time if provided
+	var expiresAt *time.Time
+	if expiresIn != nil && *expiresIn > 0 {
+		t := time.Now().Add(*expiresIn)
+		expiresAt = &t
+	}
+
 	// Create a new URL
-	shortenedURL := models.NewURL(id, originalURL, userID)
+	shortenedURL := models.NewURL(id, originalURL, userID, expiresAt)
 
 	// Store the URL
 	if err := s.repo.Store(ctx, shortenedURL); err != nil {
@@ -93,6 +102,7 @@ func (s *ShortenerService) Shorten(ctx context.Context, originalURL string, user
 		CreatedAt:   shortenedURL.CreatedAt,
 		Visits:      shortenedURL.Visits,
 		UserID:      userID,
+		ExpiresAt:   expiresAt,
 	}, nil
 }
 
@@ -101,6 +111,11 @@ func (s *ShortenerService) Get(ctx context.Context, id string) (*models.URL, err
 	url, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check if URL has expired (should be redundant as repository now checks this)
+	if url.HasExpired() {
+		return nil, ErrURLExpired
 	}
 
 	// Increment visit count
@@ -130,6 +145,7 @@ func (s *ShortenerService) List(ctx context.Context) ([]*models.URLResponse, err
 			CreatedAt:   u.CreatedAt,
 			Visits:      u.Visits,
 			UserID:      u.UserID,
+			ExpiresAt:   u.ExpiresAt,
 		})
 	}
 
@@ -151,6 +167,7 @@ func (s *ShortenerService) ListByUserID(ctx context.Context, userID int) ([]*mod
 			CreatedAt:   u.CreatedAt,
 			Visits:      u.Visits,
 			UserID:      u.UserID,
+			ExpiresAt:   u.ExpiresAt,
 		})
 	}
 

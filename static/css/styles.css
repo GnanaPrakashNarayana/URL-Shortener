@@ -549,3 +549,128 @@ body.dark-mode {
         align-self: flex-start;
     }
 }
+
+/* Advanced options in URL form */
+.advanced-options {
+    margin-top: 16px;
+    margin-bottom: 20px;
+}
+
+.advanced-options-toggle {
+    background: none;
+    border: none;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    border-radius: var(--border-radius-medium);
+    transition: background-color var(--transition-speed-fast) ease;
+}
+
+.advanced-options-toggle:hover {
+    background-color: var(--fill-color);
+}
+
+.toggle-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    margin-right: 4px;
+    font-weight: bold;
+    transition: transform var(--transition-speed-fast) ease;
+}
+
+.advanced-options-toggle.active .toggle-icon {
+    transform: rotate(45deg);
+}
+
+.advanced-options-content {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height var(--transition-speed-medium) ease,
+                opacity var(--transition-speed-medium) ease,
+                margin var(--transition-speed-medium) ease;
+    margin-top: 0;
+    padding: 0 8px;
+    border-left: 2px solid transparent;
+}
+
+.advanced-options-content.active {
+    max-height: 500px;
+    opacity: 1;
+    margin-top: 16px;
+    border-left: 2px solid var(--primary-color);
+}
+
+/* Custom slug input */
+.custom-slug-input {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.custom-slug-input .prefix,
+.prefix {
+    position: absolute;
+    left: 14px;
+    color: var(--secondary-label-color);
+    font-size: 1rem;
+}
+
+.custom-slug-input .form-control {
+    padding-left: 28px;
+}
+
+/* Expiration input */
+.expiration-input {
+    display: flex;
+    gap: 8px;
+}
+
+.expiration-input .form-control:first-child {
+    flex: 1;
+}
+
+.expiration-input select.form-control {
+    flex: 1;
+}
+
+/* Hints */
+.input-hint {
+    font-size: 0.8rem;
+    color: var(--secondary-label-color);
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+/* Expiry date styling */
+.expiry-date {
+    font-size: 0.9rem;
+}
+
+.expiry-date.expired {
+    color: var(--danger-color);
+    font-weight: 500;
+}
+
+/* Expired row styling */
+.expired-row {
+    opacity: 0.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .expiration-input {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .urls-table td[data-label="Expires"] {
+        word-break: keep-all;
+    }
+}

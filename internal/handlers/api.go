@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/middleware"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
@@ -29,6 +30,7 @@ func (h *API) ShortenURL(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		URL        string `json:"url"`
 		CustomSlug string `json:"custom_slug,omitempty"`
+		ExpiresIn  int64  `json:"expires_in,omitempty"` // Duration in seconds
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -43,8 +45,15 @@ func (h *API) ShortenURL(w http.ResponseWriter, r *http.Request) {
 		userID = &user.ID
 	}
 
+	// Convert expires_in to time.Duration
+	var expiresIn *time.Duration
+	if req.ExpiresIn > 0 {
+		duration := time.Duration(req.ExpiresIn) * time.Second
+		expiresIn = &duration
+	}
+
 	// Shorten the URL
-	response, err := h.shortenerService.Shorten(r.Context(), req.URL, userID, req.CustomSlug)
+	response, err := h.shortenerService.Shorten(r.Context(), req.URL, userID, req.CustomSlug, expiresIn)
 	if err != nil {
 		switch {
 		case errors.Is(err, services.ErrInvalidURL):
@@ -74,8 +83,8 @@ func (h *API) RedirectURL(w http.ResponseWriter, r *http.Request) {
 	// Get the URL
 	url, err := h.shortenerService.Get(r.Context(), id)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			http.Error(w, "URL not found", http.StatusNotFound)
+		if errors.Is(err, repository.ErrNotFound) || errors.Is(err, services.ErrURLExpired) {
+			http.Error(w, "URL not found or has expired", http.StatusNotFound)
 			return
 		}
 		http.Error(w, "Failed to get URL", http.StatusInternalServerError)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/models"
 )
@@ -43,6 +44,11 @@ func (r *MemoryRepository) GetByID(ctx context.Context, id string) (*models.URL,
 		return nil, ErrNotFound
 	}
 	
+	// Check if URL has expired
+	if url.HasExpired() {
+		return nil, ErrNotFound
+	}
+	
 	return url, nil
 }
 
@@ -60,27 +66,37 @@ func (r *MemoryRepository) Update(ctx context.Context, url *models.URL) error {
 	return nil
 }
 
-// List lists all URLs in the repository
+// List lists all URLs in the repository that are not expired
 func (r *MemoryRepository) List(ctx context.Context) ([]*models.URL, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	
+	now := time.Now()
 	urls := make([]*models.URL, 0, len(r.urls))
 	for _, url := range r.urls {
+		// Skip expired URLs
+		if url.ExpiresAt != nil && now.After(*url.ExpiresAt) {
+			continue
+		}
 		urls = append(urls, url)
 	}
 	
 	return urls, nil
 }
 
-// ListByUserID lists all URLs for a user
+// ListByUserID lists all URLs for a user that are not expired
 func (r *MemoryRepository) ListByUserID(ctx context.Context, userID int) ([]*models.URL, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	
+	now := time.Now()
 	urls := make([]*models.URL, 0)
 	for _, url := range r.urls {
 		if url.UserID != nil && *url.UserID == userID {
+			// Skip expired URLs
+			if url.ExpiresAt != nil && now.After(*url.ExpiresAt) {
+				continue
+			}
 			urls = append(urls, url)
 		}
 	}

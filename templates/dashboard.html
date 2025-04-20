@@ -40,16 +40,21 @@
                 <div class="stat-label">Total Links</div>
             </div>
             
-            <!-- Calculate total visits - removed add function -->
+            <!-- Calculate total visits -->
             <div class="stat-card fade-in delay-2">
                 <div class="stat-value">
-                    <!-- This will be filled by JavaScript -->
                     <span id="totalVisits">0</span>
                 </div>
                 <div class="stat-label">Total Visits</div>
             </div>
             
-            <!-- You could add more stat cards here -->
+            <!-- Active links stat -->
+            <div class="stat-card fade-in delay-2">
+                <div class="stat-value">
+                    <span id="activeLinks">0</span>
+                </div>
+                <div class="stat-label">Active Links</div>
+            </div>
         </div>
         
         <!-- URL shortening form -->
@@ -57,14 +62,48 @@
             <form action="/dashboard/shorten" method="post" class="card">
                 <div class="card-body">
                     <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
-                    <div class="form-group url-input-group">
-                        <input type="url" name="url" placeholder="Enter your long URL here" class="form-control url-input" required>
-                        <div class="custom-slug-input">
-                            <input type="text" name="custom_slug" placeholder="Custom slug (optional)" class="form-control" pattern="[a-zA-Z0-9_-]+" title="Only letters, numbers, hyphens and underscores allowed">
-                        </div>
-                        <button type="submit" class="btn btn-primary url-input-btn">Shorten</button>
+                    
+                    <!-- URL Input -->
+                    <div class="form-group">
+                        <label for="url-input" class="form-label">URL to Shorten</label>
+                        <input type="url" id="url-input" name="url" placeholder="Enter your long URL here" class="form-control" required>
                     </div>
-                    <p class="custom-slug-hint">Leave custom slug empty to generate a random one</p>
+                    
+                    <!-- Advanced Options (collapsible) -->
+                    <div class="advanced-options">
+                        <button type="button" class="advanced-options-toggle">
+                            <span class="toggle-icon">+</span> Advanced Options
+                        </button>
+                        
+                        <div class="advanced-options-content">
+                            <!-- Custom Slug -->
+                            <div class="form-group">
+                                <label for="custom-slug" class="form-label">Custom Slug (Optional)</label>
+                                <div class="custom-slug-input">
+                                    <span class="prefix">/</span>
+                                    <input type="text" id="custom-slug" name="custom_slug" placeholder="yourbrand" class="form-control" pattern="[a-zA-Z0-9_-]+" title="Only letters, numbers, hyphens and underscores allowed">
+                                </div>
+                                <p class="input-hint">Use only letters, numbers, hyphens, and underscores</p>
+                            </div>
+                            
+                            <!-- Expiration -->
+                            <div class="form-group">
+                                <label for="expiration-value" class="form-label">Link Expiration (Optional)</label>
+                                <div class="expiration-input">
+                                    <input type="number" id="expiration-value" name="expiration_value" min="1" placeholder="30" class="form-control">
+                                    <select name="expiration_unit" id="expiration-unit" class="form-control">
+                                        <option value="minutes">Minutes</option>
+                                        <option value="hours">Hours</option>
+                                        <option value="days" selected>Days</option>
+                                        <option value="weeks">Weeks</option>
+                                    </select>
+                                </div>
+                                <p class="input-hint">Leave empty for a permanent link</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">Shorten URL</button>
                 </div>
             </form>
         </div>
@@ -80,12 +119,13 @@
                                 <th>Short URL</th>
                                 <th>Original URL</th>
                                 <th>Created</th>
+                                <th>Expires</th>
                                 <th>Visits</th>
                             </tr>
                         </thead>
                         <tbody>
                             {{ range .URLs }}
-                            <tr class="url-row">
+                            <tr class="url-row {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired-row{{ end }}">
                                 <td>
                                     <div class="short-url-cell">
                                         <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
@@ -98,6 +138,13 @@
                                     </div>
                                 </td>
                                 <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                                <td>
+                                    <span class="expiry-date {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired{{ end }}" 
+                                          title="{{ formatExpiryDate .ExpiresAt }}" 
+                                          data-expired="{{ if and .ExpiresAt (hasExpired .ExpiresAt) }}true{{ else }}false{{ end }}">
+                                        {{ timeUntil .ExpiresAt }}
+                                    </span>
+                                </td>
                                 <td class="visit-count" data-visits="{{ .Visits }}">{{ .Visits }}</td>
                             </tr>
                             {{ end }}
@@ -127,6 +174,18 @@
             });
             
             document.getElementById('totalVisits').textContent = totalVisits;
+            
+            // Calculate active links
+            const expiryDates = document.querySelectorAll('.expiry-date');
+            let activeLinks = 0;
+            
+            expiryDates.forEach(function(element) {
+                if (element.getAttribute('data-expired') !== 'true') {
+                    activeLinks++;
+                }
+            });
+            
+            document.getElementById('activeLinks').textContent = activeLinks;
         });
     </script>
 </body>

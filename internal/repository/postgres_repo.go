@@ -42,13 +42,14 @@ func (r *PostgresRepository) Store(ctx context.Context, url *models.URL) error {
 	// Insert the URL - using time values for created_at and last_visit_at
 	_, err = tx.ExecContext(
 		ctx,
-		"INSERT INTO urls (id, original_url, created_at, visits, last_visit_at, user_id) VALUES ($1, $2, $3, $4, $5, $6)",
+		"INSERT INTO urls (id, original_url, created_at, visits, last_visit_at, user_id, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
 		url.ID,
 		url.OriginalURL,
 		url.CreatedAt,
 		url.Visits,
 		lastVisitAt,
 		url.UserID,
+		url.ExpiresAt,
 	)
 	if err != nil {
 		return err
@@ -64,10 +65,11 @@ func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*models.UR
 	var url models.URL
 	var lastVisitAt sql.NullTime
 	var userID sql.NullInt64
+	var expiresAt sql.NullTime
 
 	err := r.db.QueryRowContext(
 		ctx,
-		"SELECT id, original_url, created_at, visits, last_visit_at, user_id FROM urls WHERE id = $1",
+		"SELECT id, original_url, created_at, visits, last_visit_at, user_id, expires_at FROM urls WHERE id = $1",
 		id,
 	).Scan(
 		&url.ID,
@@ -76,6 +78,7 @@ func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*models.UR
 		&url.Visits,
 		&lastVisitAt,
 		&userID,
+		&expiresAt,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -97,6 +100,18 @@ func (r *PostgresRepository) GetByID(ctx context.Context, id string) (*models.UR
 		url.UserID = &userId
 	} else {
 		url.UserID = nil
+	}
+
+	// Set ExpiresAt if not NULL
+	if expiresAt.Valid {
+		url.ExpiresAt = &expiresAt.Time
+	} else {
+		url.ExpiresAt = nil
+	}
+
+	// Check if URL has expired
+	if url.HasExpired() {
+		return nil, ErrNotFound
 	}
 
 	return &url, nil
@@ -122,11 +137,12 @@ func (r *PostgresRepository) Update(ctx context.Context, url *models.URL) error 
 	// Update the URL
 	result, err := tx.ExecContext(
 		ctx,
-		"UPDATE urls SET original_url = $1, visits = $2, last_visit_at = $3, user_id = $4 WHERE id = $5",
+		"UPDATE urls SET original_url = $1, visits = $2, last_visit_at = $3, user_id = $4, expires_at = $5 WHERE id = $6",
 		url.OriginalURL,
 		url.Visits,
 		lastVisitAt,
 		url.UserID,
+		url.ExpiresAt,
 		url.ID,
 	)
 	if err != nil {
@@ -148,10 +164,13 @@ func (r *PostgresRepository) Update(ctx context.Context, url *models.URL) error 
 
 // List lists all URLs in the repository
 func (r *PostgresRepository) List(ctx context.Context) ([]*models.URL, error) {
-	// Query all URLs
+	// Query all URLs that are not expired
 	rows, err := r.db.QueryContext(
 		ctx,
-		"SELECT id, original_url, created_at, visits, last_visit_at, user_id FROM urls ORDER BY created_at DESC",
+		`SELECT id, original_url, created_at, visits, last_visit_at, user_id, expires_at FROM urls 
+		 WHERE expires_at IS NULL OR expires_at > $1
+		 ORDER BY created_at DESC`,
+		time.Now(),
 	)
 	if err != nil {
 		return nil, err
@@ -164,6 +183,7 @@ func (r *PostgresRepository) List(ctx context.Context) ([]*models.URL, error) {
 		var url models.URL
 		var lastVisitAt sql.NullTime
 		var userID sql.NullInt64
+		var expiresAt sql.NullTime
 
 		err := rows.Scan(
 			&url.ID,
@@ -172,6 +192,7 @@ func (r *PostgresRepository) List(ctx context.Context) ([]*models.URL, error) {
 			&url.Visits,
 			&lastVisitAt,
 			&userID,
+			&expiresAt,
 		)
 		if err != nil {
 			return nil, err
@@ -192,6 +213,13 @@ func (r *PostgresRepository) List(ctx context.Context) ([]*models.URL, error) {
 			url.UserID = nil
 		}
 
+		// Set ExpiresAt if not NULL
+		if expiresAt.Valid {
+			url.ExpiresAt = &expiresAt.Time
+		} else {
+			url.ExpiresAt = nil
+		}
+
 		urls = append(urls, &url)
 	}
 
@@ -204,11 +232,14 @@ func (r *PostgresRepository) List(ctx context.Context) ([]*models.URL, error) {
 
 // ListByUserID lists all URLs for a user
 func (r *PostgresRepository) ListByUserID(ctx context.Context, userID int) ([]*models.URL, error) {
-	// Query all URLs for a user
+	// Query all URLs for a user that are not expired
 	rows, err := r.db.QueryContext(
 		ctx,
-		"SELECT id, original_url, created_at, visits, last_visit_at, user_id FROM urls WHERE user_id = $1 ORDER BY created_at DESC",
+		`SELECT id, original_url, created_at, visits, last_visit_at, user_id, expires_at FROM urls 
+		 WHERE user_id = $1 AND (expires_at IS NULL OR expires_at > $2)
+		 ORDER BY created_at DESC`,
 		userID,
+		time.Now(),
 	)
 	if err != nil {
 		return nil, err
@@ -221,6 +252,7 @@ func (r *PostgresRepository) ListByUserID(ctx context.Context, userID int) ([]*m
 		var url models.URL
 		var lastVisitAt sql.NullTime
 		var userIDSql sql.NullInt64
+		var expiresAt sql.NullTime
 
 		err := rows.Scan(
 			&url.ID,
@@ -229,6 +261,7 @@ func (r *PostgresRepository) ListByUserID(ctx context.Context, userID int) ([]*m
 			&url.Visits,
 			&lastVisitAt,
 			&userIDSql,
+			&expiresAt,
 		)
 		if err != nil {
 			return nil, err
@@ -247,6 +280,13 @@ func (r *PostgresRepository) ListByUserID(ctx context.Context, userID int) ([]*m
 			url.UserID = &userId
 		} else {
 			url.UserID = nil
+		}
+
+		// Set ExpiresAt if not NULL
+		if expiresAt.Valid {
+			url.ExpiresAt = &expiresAt.Time
+		} else {
+			url.ExpiresAt = nil
 		}
 
 		urls = append(urls, &url)

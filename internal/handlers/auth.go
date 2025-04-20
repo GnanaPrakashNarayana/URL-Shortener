@@ -26,8 +26,14 @@ type Auth struct {
 
 // NewAuth creates a new auth handler
 func NewAuth(authService *services.AuthService, templatesDir string, sessionStore *sessions.CookieStore, sessionName string) (*Auth, error) {
+	// Create a new template with functions
+	tmpl := template.New("")
+	
+	// Add template functions
+	tmpl = tmpl.Funcs(GetTemplateFuncs())
+	
 	// Parse templates
-	templates, err := template.ParseGlob(filepath.Join(templatesDir, "*.html"))
+	templates, err := tmpl.ParseGlob(filepath.Join(templatesDir, "*.html"))
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +354,7 @@ func generateRandomState() (string, error) {
 func (h *Auth) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
 	w.Header().Set("Content-Type", "text/html")
 	if err := h.templates.ExecuteTemplate(w, name, data); err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }
 

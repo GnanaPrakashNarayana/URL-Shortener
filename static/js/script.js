@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     // --- Ripple Effect ---
-    // (Kept from original - CSS handles the visuals)
     const buttons = document.querySelectorAll('.btn, .copy-btn, .oauth-btn'); // Added oauth-btn
     buttons.forEach(button => {
         button.addEventListener('click', function(e) {
@@ -190,5 +189,38 @@ document.addEventListener('DOMContentLoaded', function() {
         window.addEventListener('scroll', animateOnScroll);
     }
 
+    // Advanced Options Toggle - FIX
+    const advancedOptionsToggles = document.querySelectorAll('.advanced-options-toggle');
+    
+    advancedOptionsToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent default button behavior
+            
+            // Find the parent .advanced-options element
+            const parent = this.closest('.advanced-options');
+            if (!parent) return;
+            
+            // Find the content container
+            const content = parent.querySelector('.advanced-options-content');
+            if (!content) return;
+            
+            // Toggle active class on both the button and content
+            this.classList.toggle('active');
+            content.classList.toggle('active');
+            
+            // Change the toggle icon
+            const icon = this.querySelector('.toggle-icon');
+            if (icon) {
+                icon.textContent = this.classList.contains('active') ? '−' : '+';
+            }
+        });
+    });
+
+    // Expiry date tooltips
+    const expiryDates = document.querySelectorAll('.expiry-date');
+    expiryDates.forEach(date => {
+        // Initialize any tooltips or special handling for expiry dates
+        // This is a placeholder for any future tooltip library integration
+    });
 
 }); // End DOMContentLoaded
