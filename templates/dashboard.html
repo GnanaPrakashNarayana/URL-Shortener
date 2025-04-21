@@ -25,28 +25,26 @@
                 <a href="/" class="btn btn-secondary">Home</a>
             </div>
         </div>
-        
-        <!-- Error message -->
+
         {{ if .Error }}
         <div class="error fade-in delay-1">
             {{ .Error }}
         </div>
         {{ end }}
-        
-        <!-- Stats cards -->
+
         <div class="dash-stats">
             <div class="stat-card fade-in delay-1">
                 <div class="stat-value">{{ len .URLs }}</div>
                 <div class="stat-label">Total Links</div>
             </div>
-            
+
             <div class="stat-card fade-in delay-2">
                 <div class="stat-value">
                     <span id="totalVisits">0</span>
                 </div>
                 <div class="stat-label">Total Visits</div>
             </div>
-            
+
             <div class="stat-card fade-in delay-2">
                 <div class="stat-value">
                     <span id="activeLinks">0</span>
@@ -54,31 +52,26 @@
                 <div class="stat-label">Active Links</div>
             </div>
         </div>
-        
-        <!-- URL shortening form -->
+
         <div class="url-shortener-form fade-in delay-3">
             <form action="/dashboard/shorten" method="post" class="card">
                 <div class="card-body">
                     <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
-                    
-                    <!-- URL Input -->
+
                     <div class="form-group">
                         <label for="url-input" class="form-label">URL to Shorten</label>
                         <input type="url" id="url-input" name="url" placeholder="Enter your long URL here" class="form-control" required>
                     </div>
-                    
-                    <!-- QR Code Toggle -->
+
                     <div class="qr-code-toggle">
                         <input type="checkbox" id="qr-code-toggle" name="generate_qr" value="true">
                         <label for="qr-code-toggle" class="qr-code-toggle-label">Generate QR Code</label>
                     </div>
-                    
-                    <!-- QR Code Preview (initially hidden) -->
+
                     <div class="qr-code-preview">
                         <img src="" alt="QR Code Preview" class="qr-preview-image">
                     </div>
-                    
-                    <!-- QR Code Format Options (shown when QR Code is enabled) -->
+
                     <div class="qr-code-format" id="qr-format-options">
                         <div class="qr-code-format-option">
                             <input type="radio" id="qr-format-png" name="qr_format" value="png" checked>
@@ -89,15 +82,13 @@
                             <label for="qr-format-svg" class="qr-code-format-label">SVG</label>
                         </div>
                     </div>
-                    
-                    <!-- Advanced Options (collapsible) -->
+
                     <div class="advanced-options">
                         <button type="button" class="advanced-options-toggle">
                             <span class="toggle-icon">+</span> Advanced Options
                         </button>
-                        
+
                         <div class="advanced-options-content">
-                            <!-- Custom Slug -->
                             <div class="form-group">
                                 <label for="custom-slug" class="form-label">Custom Slug (Optional)</label>
                                 <div class="custom-slug-input">
@@ -106,8 +97,7 @@
                                 </div>
                                 <p class="input-hint">Use only letters, numbers, hyphens, and underscores</p>
                             </div>
-                            
-                            <!-- Expiration -->
+
                             <div class="form-group">
                                 <label for="expiration-value" class="form-label">Link Expiration (Optional)</label>
                                 <div class="expiration-input">
@@ -121,28 +111,28 @@
                                 </div>
                                 <p class="input-hint">Leave empty for a permanent link</p>
                             </div>
-                            
-                            <!-- Password Protection -->
+
                             <div class="form-group">
                                 <label for="password" class="form-label">Password Protection (Optional)</label>
-                                <input type="password" id="password" name="password" placeholder="Leave empty for no password" class="form-control">
+                                <div class="password-input-group">
+                                    <input type="password" id="password" name="password" placeholder="Leave empty for no password" class="form-control">
+                                </div>
                                 <p class="input-hint">Requires users to enter a password before accessing the link</p>
                             </div>
                         </div>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary btn-block">Shorten URL</button>
                 </div>
             </form>
         </div>
-        
-        <!-- List of user's shortened URLs -->
+
         <h2 class="fade-in delay-4">Your Shortened URLs</h2>
         <div class="url-list fade-in delay-5">
             {{ if .URLs }}
                 <div class="card">
                     <div class="table-responsive">
-                        <table class="urls-table">
+                        <table class="urls-table dashboard-urls-table">
                             <thead>
                                 <tr>
                                     <th>Short URL</th>
@@ -158,27 +148,29 @@
                                 <tr class="url-row {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired-row{{ end }}">
                                     <td>
                                         <div class="short-url-cell">
-                                            <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
-                                            <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
-                                            <button class="qr-code-btn" data-url="{{ .ShortURL }}">QR Code</button>
+                                            <a href="{{ .ShortURL }}" target="_blank" class="url-link short-link" title="{{ .ShortURL }}" data-url="{{ .ShortURL }}">{{ .ShortURL }}</a>
+                                            <div class="action-buttons">
+                                                <button class="copy-btn" data-url="{{ .ShortURL }}" title="Copy Short URL">Copy</button>
+                                                <button class="qr-code-btn" data-url="{{ .ShortURL }}" title="Show QR Code">QR</button>
+                                            </div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="original-url">
-                                            <a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a>
+                                            <a href="{{ .OriginalURL }}" target="_blank" class="url-link original-link" title="{{ .OriginalURL }}" data-url="{{ .OriginalURL }}">{{ .OriginalURL }}</a>
                                         </div>
                                     </td>
-                                    <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
+                                    <td><span class="date-text">{{ .CreatedAt.Format "Jan 02, 2006" }}</span></td>
                                     <td>
-                                        <span class="expiry-date {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired{{ end }}" 
-                                              title="{{ formatExpiryDate .ExpiresAt }}" 
+                                        <span class="expiry-date {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired{{ end }}"
+                                              title="{{ formatExpiryDate .ExpiresAt }}"
                                               data-expired="{{ if and .ExpiresAt (hasExpired .ExpiresAt) }}true{{ else }}false{{ end }}">
                                             {{ timeUntil .ExpiresAt }}
                                         </span>
                                     </td>
                                     <td>
                                         {{ if .IsPasswordProtected }}
-                                        <span class="badge password-protected">Password Protected</span>
+                                        <span class="badge password-protected">Password</span>
                                         {{ else }}
                                         <span class="badge">None</span>
                                         {{ end }}
@@ -200,7 +192,7 @@
             {{ end }}
         </div>
     </div>
-    
+
     <script src="/static/js/script.js"></script>
 </body>
 </html>

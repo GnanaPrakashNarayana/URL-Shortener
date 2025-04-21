@@ -33,6 +33,115 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- URL Expansion Feature ---
+    const setupUrlExpansion = () => {
+        const urlLinks = document.querySelectorAll('.url-link');
+        
+        urlLinks.forEach(link => {
+            // Remove any existing indicators first
+            const existingIndicator = link.querySelector('.url-expand-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+            
+            // Check if the content is truncated
+            const isTruncated = link.scrollWidth > link.clientWidth;
+            
+            // Add expand indicator if truncated
+            if (isTruncated) {
+                const indicator = document.createElement('span');
+                indicator.className = 'url-expand-indicator';
+                indicator.textContent = '···';
+                link.appendChild(indicator);
+                
+                // Add truncated class for styling
+                link.classList.add('truncated');
+                
+                // Add click handler for the indicator
+                indicator.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showUrlPopup(link);
+                });
+                
+                // Add right-click (contextmenu) handler to show full URL
+                link.addEventListener('contextmenu', function(e) {
+                    // Don't prevent default context menu, but show popup
+                    showUrlPopup(link);
+                });
+                
+                // Add alt+click handler to show URL without navigating
+                link.addEventListener('click', function(e) {
+                    // If Alt key is pressed, show the popup instead of navigating
+                    if (e.altKey) {
+                        e.preventDefault();
+                        showUrlPopup(link);
+                    }
+                    // Otherwise, let the default link behavior happen
+                });
+            } else {
+                link.classList.remove('truncated');
+            }
+        });
+    };
+    
+    // Function to show URL popup
+    function showUrlPopup(linkElement) {
+        // Remove any existing popup
+        document.querySelectorAll('.url-popup').forEach(p => p.remove());
+
+        // Get the bounding rect of the clicked element
+        const rect = linkElement.getBoundingClientRect();
+
+        // Create the popup
+        const popup = document.createElement('div');
+        popup.className = 'url-popup';
+        popup.textContent = linkElement.getAttribute('data-url') || linkElement.getAttribute('href') || linkElement.textContent;
+
+        // Position the popup
+        let top = rect.bottom + 5;
+        let left = rect.left;
+        
+        // Adjust position if too close to bottom of screen
+        if (window.innerHeight - rect.bottom < 120) {
+            top = rect.top - 80; // Position above the link
+        }
+        
+        // Adjust position if too close to right edge of screen
+        if (window.innerWidth - rect.left < 350) {
+            left = Math.max(10, window.innerWidth - 460);
+        }
+        
+        popup.style.top = `${top}px`;
+        popup.style.left = `${left}px`;
+
+        document.body.appendChild(popup);
+
+        // Remove popup on outside click
+        const outsideClickHandler = (event) => {
+            if (!popup.contains(event.target)) {
+                popup.remove();
+                document.removeEventListener('click', outsideClickHandler);
+            }
+        };
+        
+        setTimeout(() => {
+            document.addEventListener('click', outsideClickHandler);
+        }, 10);
+    }
+    
+    // On window resize, remove any popups and recalculate truncation
+    window.addEventListener('resize', () => {
+        document.querySelectorAll('.url-popup').forEach(p => p.remove());
+        setTimeout(setupUrlExpansion, 300); // Re-check truncation after resize
+    });
+    
+    // Setup URL expansion initially
+    setTimeout(setupUrlExpansion, 500);
+    
+    // Re-check periodically
+    setInterval(setupUrlExpansion, 3000);
+
     // --- Form Validation & Animations ---
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {

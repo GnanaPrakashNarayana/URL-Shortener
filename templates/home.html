@@ -140,14 +140,16 @@
                                 <tr class="url-row {{ if and .ExpiresAt (hasExpired .ExpiresAt) }}expired-row{{ end }}">
                                     <td>
                                         <div class="short-url-cell">
-                                            <a href="{{ .ShortURL }}" target="_blank">{{ .ShortURL }}</a>
-                                            <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
-                                            <button class="qr-code-btn" data-url="{{ .ShortURL }}">QR Code</button>
+                                            <a href="{{ .ShortURL }}" target="_blank" class="url-link short-link" title="{{ .ShortURL }}" data-url="{{ .ShortURL }}">{{ .ShortURL }}</a>
+                                            <div class="action-buttons">
+                                                <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
+                                                <button class="qr-code-btn" data-url="{{ .ShortURL }}">QR Code</button>
+                                            </div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="original-url">
-                                            <a href="{{ .OriginalURL }}" target="_blank">{{ .OriginalURL }}</a>
+                                            <a href="{{ .OriginalURL }}" target="_blank" class="url-link original-link" title="{{ .OriginalURL }}" data-url="{{ .OriginalURL }}">{{ .OriginalURL }}</a>
                                         </div>
                                     </td>
                                     <td>{{ .CreatedAt.Format "Jan 02, 2006" }}</td>
