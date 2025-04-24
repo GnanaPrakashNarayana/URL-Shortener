@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS bio_links;
+DROP TABLE IF EXISTS bio_pages;

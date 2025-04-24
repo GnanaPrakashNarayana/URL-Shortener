@@ -24,12 +24,14 @@ type App struct {
 	config         *config.Config
 	repo           repository.Repository
 	userRepo       repository.UserRepository
+	bioPageRepo    repository.BioPageRepository
 	server         *http.Server
 	apiHandler     *handlers.API
 	webHandler     *handlers.Web
 	authHandler    *handlers.Auth
 	dashHandler    *handlers.Dashboard
 	qrCodeHandler  *handlers.QRCode
+	bioPageHandler *handlers.BioPage
 	dbManager      *database.Manager
 	authMiddleware *middleware.AuthMiddleware
 	sessionStore   *sessions.CookieStore
@@ -40,6 +42,7 @@ type App struct {
 func New(cfg *config.Config) (*App, error) {
 	var repo repository.Repository
 	var userRepo repository.UserRepository
+	var bioPageRepo repository.BioPageRepository
 	var dbManager *database.Manager
 	var err error
 
@@ -73,10 +76,17 @@ func New(cfg *config.Config) (*App, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Create PostgreSQL bio page repository
+		bioPageRepo, err = repository.NewPostgresBioPageRepository(db)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		// Fall back to memory repository
 		repo = repository.NewMemoryRepository()
 		userRepo = repository.NewMemoryUserRepository()
+		bioPageRepo = repository.NewMemoryBioPageRepository()
 	}
 
 	// Create session store
@@ -104,6 +114,9 @@ func New(cfg *config.Config) (*App, error) {
 
 	// Create QR code service
 	qrCodeService := services.NewQRCodeService()
+
+	// Create Bio Page service
+	bioPageService := services.NewBioPageService(bioPageRepo, cfg.Shortener.BaseURL)
 
 	// Create auth middleware
 	authMiddleware := middleware.NewAuthMiddleware(authService, sessionStore, cfg.Auth.SessionCookieName)
@@ -135,6 +148,12 @@ func New(cfg *config.Config) (*App, error) {
 
 	// Create QR code handler
 	qrCodeHandler, err := handlers.NewQRCode(qrCodeService, "templates")
+	if err != nil {
+		return nil, err
+	}
+
+	// Create Bio Page handler
+	bioPageHandler, err := handlers.NewBioPage(bioPageService, "templates")
 	if err != nil {
 		return nil, err
 	}
@@ -181,6 +200,22 @@ func New(cfg *config.Config) (*App, error) {
 	dashRouter.HandleFunc("/", dashHandler.Home).Methods(http.MethodGet)
 	dashRouter.HandleFunc("/shorten", dashHandler.ShortenURL).Methods(http.MethodPost)
 
+	// Bio Page routes
+	bioRouter := router.PathPrefix("/bio").Subrouter()
+	bioRouter.Use(authMiddleware.RequireAuth)
+	bioRouter.HandleFunc("/pages", bioPageHandler.ListBioPages).Methods(http.MethodGet)
+	bioRouter.HandleFunc("/create", bioPageHandler.CreateBioPageForm).Methods(http.MethodGet)
+	bioRouter.HandleFunc("/create", bioPageHandler.CreateBioPage).Methods(http.MethodPost)
+	bioRouter.HandleFunc("/edit/{id:[0-9]+}", bioPageHandler.EditBioPageForm).Methods(http.MethodGet)
+	bioRouter.HandleFunc("/update/{id:[0-9]+}", bioPageHandler.UpdateBioPage).Methods(http.MethodPost)
+	bioRouter.HandleFunc("/delete/{id:[0-9]+}", bioPageHandler.DeleteBioPage).Methods(http.MethodPost)
+	
+	// Bio Link routes
+	bioRouter.HandleFunc("/links/add/{id:[0-9]+}", bioPageHandler.AddBioLink).Methods(http.MethodPost)
+	bioRouter.HandleFunc("/links/update/{id:[0-9]+}", bioPageHandler.UpdateBioLink).Methods(http.MethodPost)
+	bioRouter.HandleFunc("/links/delete/{id:[0-9]+}", bioPageHandler.DeleteBioLink).Methods(http.MethodGet)
+	bioRouter.HandleFunc("/links/reorder/{id:[0-9]+}", bioPageHandler.ReorderBioLinks).Methods(http.MethodPost)
+	
 	// QR Code routes
 	router.HandleFunc("/qrcode/generate", qrCodeHandler.Generate).Methods(http.MethodGet)
 	router.HandleFunc("/qrcode/preview/{id}", qrCodeHandler.Preview).Methods(http.MethodGet)
@@ -193,6 +228,12 @@ func New(cfg *config.Config) (*App, error) {
 	// Web routes
 	router.HandleFunc("/", webHandler.Home).Methods(http.MethodGet)
 	router.HandleFunc("/shorten", webHandler.ShortenURL).Methods(http.MethodPost)
+	
+	// Public bio page routes
+	router.HandleFunc("/b/{shortCode}", bioPageHandler.ViewBioPage).Methods(http.MethodGet)
+	router.HandleFunc("/b/link/{id:[0-9]+}", bioPageHandler.RedirectBioLink).Methods(http.MethodGet)
+	
+	// Regular URL redirect
 	router.HandleFunc("/{id}", apiHandler.RedirectURL).Methods(http.MethodGet)
 
 	// Password verification routes
@@ -212,12 +253,14 @@ func New(cfg *config.Config) (*App, error) {
 		config:         cfg,
 		repo:           repo,
 		userRepo:       userRepo,
+		bioPageRepo:    bioPageRepo,
 		server:         server,
 		apiHandler:     apiHandler,
 		webHandler:     webHandler,
 		authHandler:    authHandler,
 		dashHandler:    dashHandler,
 		qrCodeHandler:  qrCodeHandler,
+		bioPageHandler: bioPageHandler,
 		dbManager:      dbManager,
 		authMiddleware: authMiddleware,
 		sessionStore:   sessionStore,

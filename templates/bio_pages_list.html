@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Bio Pages - URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="theme-color" content="#0071e3">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="/" class="site-logo fade-in">Rapid URL</a>
+            <nav class="site-nav fade-in delay-1">
+                <span>Welcome, {{ .User.Username }}</span>
+                <a href="/dashboard" class="btn btn-secondary">Dashboard</a>
+                <a href="/auth/logout" class="btn btn-link">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header fade-in">
+            <h1>Your Bio Pages</h1>
+            <div class="dashboard-nav">
+                <a href="/bio/create" class="btn btn-primary">Create New Bio Page</a>
+                <a href="/" class="btn btn-secondary">Home</a>
+            </div>
+        </div>
+
+        {{ if .Error }}
+        <div class="error fade-in delay-1">
+            {{ .Error }}
+        </div>
+        {{ end }}
+
+        <div class="dash-stats">
+            <div class="stat-card fade-in delay-1">
+                <div class="stat-value">{{ len .BioPages }}</div>
+                <div class="stat-label">Total Bio Pages</div>
+            </div>
+
+            <div class="stat-card fade-in delay-2">
+                <div class="stat-value">
+                    <span id="totalVisits">0</span>
+                </div>
+                <div class="stat-label">Total Page Views</div>
+            </div>
+
+            <div class="stat-card fade-in delay-2">
+                <div class="stat-value">
+                    <span id="totalLinks">0</span>
+                </div>
+                <div class="stat-label">Total Links</div>
+            </div>
+        </div>
+
+        <div class="bio-pages-list fade-in delay-3">
+            {{ if .BioPages }}
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="urls-table">
+                            <thead>
+                                <tr>
+                                    <th>Bio Page</th>
+                                    <th>Links</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Views</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{ range .BioPages }}
+                                <tr class="url-row">
+                                    <td>
+                                        <div class="bio-page-cell">
+                                            <div class="bio-page-title">{{ .Title }}</div>
+                                            <a href="{{ .ShortURL }}" target="_blank" class="url-link short-link" title="{{ .ShortURL }}" data-url="{{ .ShortURL }}">{{ .ShortURL }}</a>
+                                        </div>
+                                    </td>
+                                    <td class="link-count" data-count="{{ len .Links }}">{{ len .Links }}</td>
+                                    <td>
+                                        {{ if .IsPublished }}
+                                        <span class="badge published">Published</span>
+                                        {{ else }}
+                                        <span class="badge">Draft</span>
+                                        {{ end }}
+                                    </td>
+                                    <td><span class="date-text">{{ .CreatedAt.Format "Jan 02, 2006" }}</span></td>
+                                    <td class="visit-count" data-visits="{{ .Visits }}">{{ .Visits }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="/bio/edit/{{ .ID }}" class="btn btn-secondary btn-sm">Edit</a>
+                                            <button class="copy-btn" data-url="{{ .ShortURL }}">Copy</button>
+                                            <button class="qr-code-btn" data-url="{{ .ShortURL }}">QR</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{ end }}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {{ else }}
+                <div class="card">
+                    <div class="card-body" style="text-align: center; padding: 60px 0;">
+                        <p>You haven't created any bio pages yet.</p>
+                        <p>Create your first bio page to organize multiple links under one URL!</p>
+                        <a href="/bio/create" class="btn btn-primary" style="margin-top: 20px;">Create Your First Bio Page</a>
+                    </div>
+                </div>
+            {{ end }}
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calculate total visits
+            const visitCounts = document.querySelectorAll('.visit-count');
+            let totalVisits = 0;
+            visitCounts.forEach(count => {
+                totalVisits += parseInt(count.getAttribute('data-visits') || 0);
+            });
+            document.getElementById('totalVisits').textContent = totalVisits;
+            
+            // Calculate total links
+            const linkCounts = document.querySelectorAll('.link-count');
+            let totalLinks = 0;
+            linkCounts.forEach(count => {
+                totalLinks += parseInt(count.getAttribute('data-count') || 0);
+            });
+            document.getElementById('totalLinks').textContent = totalLinks;
+        });
+    </script>
+</body>
+</html>

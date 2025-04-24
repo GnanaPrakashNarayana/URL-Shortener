@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"html/template"
+	"strings"
 	"time"
 )
 
@@ -43,6 +44,15 @@ func GetTemplateFuncs() template.FuncMap {
 				return false
 			}
 			return time.Now().After(*t)
+		},
+		"title": func(s string) string {
+			words := strings.Fields(s)
+			for i, word := range words {
+				if len(word) > 0 {
+					words[i] = strings.ToUpper(word[0:1]) + strings.ToLower(word[1:])
+				}
+			}
+			return strings.Join(words, " ")
 		},
 	}
 }

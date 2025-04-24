@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Bio Page - URL Shortener</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="theme-color" content="#0071e3">
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a href="/" class="site-logo fade-in">Rapid URL</a>
+            <nav class="site-nav fade-in delay-1">
+                <span>Welcome, {{ .User.Username }}</span>
+                <a href="/bio/pages" class="btn btn-secondary">My Bio Pages</a>
+                <a href="/dashboard" class="btn btn-secondary">Dashboard</a>
+                <a href="/auth/logout" class="btn btn-link">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <div class="dashboard-header fade-in">
+            <h1>Create Bio Page</h1>
+            <div class="dashboard-nav">
+                <a href="/bio/pages" class="btn btn-secondary">Cancel</a>
+            </div>
+        </div>
+
+        {{ if .Error }}
+        <div class="error fade-in delay-1">
+            {{ .Error }}
+        </div>
+        {{ end }}
+
+        <div class="bio-page-form fade-in delay-2">
+            <form action="/bio/create" method="post" class="card">
+                <div class="card-body">
+                    <input type="hidden" name="gorilla.csrf.Token" value="{{ .CSRFToken }}">
+
+                    <div class="form-group">
+                        <label for="title" class="form-label">Page Title</label>
+                        <input type="text" id="title" name="title" class="form-control" required placeholder="My Bio Page">
+                        <p class="input-hint">This will be displayed at the top of your bio page</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description" class="form-label">Description (Optional)</label>
+                        <textarea id="description" name="description" class="form-control" rows="3" placeholder="A short description about this page"></textarea>
+                        <p class="input-hint">A brief description that will appear below your title</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="short_code" class="form-label">Custom URL (Optional)</label>
+                        <div class="custom-slug-input">
+                            <span class="prefix">/b/</span>
+                            <input type="text" id="short_code" name="short_code" class="form-control" pattern="[a-zA-Z0-9_-]+" title="Only letters, numbers, hyphens and underscores allowed" placeholder="mybio">
+                        </div>
+                        <p class="input-hint">Leave empty to generate a random URL</p>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Create Bio Page</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="/static/js/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .BioPage.Title }}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/bio_page.css">
+    <meta name="theme-color" content="#0071e3">
+    
+    <!-- Custom CSS will be injected by JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const customCSS = `{{ .BioPage.CustomCSS }}`;
+            if (customCSS) {
+                const styleEl = document.createElement('style');
+                styleEl.textContent = customCSS;
+                document.head.appendChild(styleEl);
+            }
+        });
+    </script>
+</head>
+<body class="bio-page-body theme-{{ .BioPage.Theme }}">
+    <div class="bio-page-container">
+        <div class="bio-page-content show">
+            <!-- Header with profile image and title -->
+            <div class="bio-page-header">
+                {{ if .BioPage.ProfileImageURL }}
+                <div class="bio-avatar">
+                    <img src="{{ .BioPage.ProfileImageURL }}" alt="{{ .BioPage.Title }}" class="avatar-image">
+                </div>
+                {{ end }}
+                
+                <h1 class="bio-title">{{ .BioPage.Title }}</h1>
+                
+                {{ if .BioPage.Description }}
+                <div class="bio-description">{{ .BioPage.Description }}</div>
+                {{ end }}
+            </div>
+            
+            <!-- Links -->
+            <div class="bio-links">
+                {{ range .BioPage.Links }}
+                    {{ if .IsEnabled }}
+                    <a href="/b/link/{{ .ID }}" class="bio-link" target="_blank" rel="noopener">
+                        {{ if .Icon }}
+                        <span class="bio-link-icon">{{ .Icon }}</span>
+                        {{ end }}
+                        <span class="bio-link-title">{{ .Title }}</span>
+                    </a>
+                    {{ end }}
+                {{ end }}
+            </div>
+            
+            <!-- Footer with branding -->
+            <div class="bio-page-footer">
+                <div class="bio-footer-content">
+                    <a href="/" class="bio-footer-brand">
+                        <span class="bio-footer-logo">Rapid URL</span>
+                    </a>
+                    
+                    {{ if .IsOwner }}
+                    <a href="/bio/edit/{{ .BioPage.ID }}" class="bio-edit-link">Edit</a>
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
