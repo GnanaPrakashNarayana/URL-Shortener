@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net/http"
 	"path/filepath"
@@ -532,49 +533,71 @@ func (h *BioPage) ReorderBioLinks(w http.ResponseWriter, r *http.Request) {
 
 // ViewBioPage displays the public bio page
 func (h *BioPage) ViewBioPage(w http.ResponseWriter, r *http.Request) {
-	// Get the bio page short code from the URL
-	vars := mux.Vars(r)
-	shortCode := vars["shortCode"]
+    // Get the bio page short code from the URL
+    vars := mux.Vars(r)
+    shortCode := vars["shortCode"]
 
-	// Get the bio page
-	bioPage, err := h.bioPageService.GetBioPageByShortCode(r.Context(), shortCode)
-	if err != nil {
-		h.renderError(w, "Bio page not found", http.StatusNotFound)
-		return
-	}
+    // Log shortcode for debugging
+    fmt.Printf("Accessing bio page with shortcode: %s\n", shortCode)
 
-	// Check if the bio page is published
-	if !bioPage.IsPublished {
-		h.renderError(w, "This bio page is not published", http.StatusNotFound)
-		return
-	}
+    // Get the bio page
+    bioPage, err := h.bioPageService.GetBioPageByShortCode(r.Context(), shortCode)
+    if err != nil {
+        fmt.Printf("Error retrieving bio page: %v\n", err)
+        h.renderError(w, fmt.Sprintf("Bio page not found: %v", err), http.StatusNotFound)
+        return
+    }
 
-	// Increment the visit count
-	err = h.bioPageService.IncrementBioPageVisits(r.Context(), bioPage.ID)
-	if err != nil {
-		// Log the error but continue with the request
-	}
+    // Check if the bio page is published
+    if !bioPage.IsPublished {
+        fmt.Printf("Bio page is not published: %d\n", bioPage.ID)
+        h.renderError(w, "This bio page is not published", http.StatusNotFound)
+        return
+    }
 
-	// Get the user from the context (if any)
-	user := middleware.GetUserFromContext(r.Context())
+    // Log the bio page data for debugging
+    fmt.Printf("Bio page found: ID=%d, Title=%s, Links=%d\n", 
+               bioPage.ID, bioPage.Title, len(bioPage.Links))
 
-	// Check if the user owns the bio page
-	isOwner := user != nil && user.ID == bioPage.UserID
+    // Increment the visit count
+    err = h.bioPageService.IncrementBioPageVisits(r.Context(), bioPage.ID)
+    if err != nil {
+        fmt.Printf("Error incrementing visit count: %v\n", err)
+    }
 
-	// Render the template
-	data := struct {
-		BioPage   *models.BioPageResponse
-		User      *models.User
-		IsOwner   bool
-		CSRFToken string
-	}{
-		BioPage:   bioPage,
-		User:      user,
-		IsOwner:   isOwner,
-		CSRFToken: csrf.Token(r),
-	}
+    // Get the user from the context (if any)
+    user := middleware.GetUserFromContext(r.Context())
 
-	h.renderTemplate(w, "bio_page.html", data)
+    // Check if the user owns the bio page
+    isOwner := user != nil && user.ID == bioPage.UserID
+
+    // Render the template
+    data := struct {
+        BioPage   *models.BioPageResponse
+        User      *models.User
+        IsOwner   bool
+        CSRFToken string
+    }{
+        BioPage:   bioPage,
+        User:      user,
+        IsOwner:   isOwner,
+        CSRFToken: csrf.Token(r),
+    }
+
+    // Set content type and cache control headers
+    w.Header().Set("Content-Type", "text/html; charset=utf-8")
+    w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+    w.Header().Set("Pragma", "no-cache")
+    w.Header().Set("Expires", "0")
+
+    // Render the template
+    if err := h.templates.ExecuteTemplate(w, "bio_page.html", data); err != nil {
+        fmt.Printf("Error rendering template: %v\n", err)
+        http.Error(w, "Error rendering page: "+err.Error(), http.StatusInternalServerError)
+        return
+    }
+
+    fmt.Printf("Bio page template rendered successfully\n")
 }
 
 // RedirectBioLink handles redirecting to a bio link
@@ -603,6 +626,7 @@ func (h *BioPage) RedirectBioLink(w http.ResponseWriter, r *http.Request) {
 	// Increment the visit count
 	err = h.bioPageService.IncrementBioLinkVisits(r.Context(), id)
 	if err != nil {
+		fmt.Printf("Error incrementing bio link visit count: %v\n", err)
 		// Log the error but continue with the request
 	}
 
@@ -612,8 +636,8 @@ func (h *BioPage) RedirectBioLink(w http.ResponseWriter, r *http.Request) {
 
 // renderTemplate renders a template
 func (h *BioPage) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
-	w.Header().Set("Content-Type", "text/html")
 	if err := h.templates.ExecuteTemplate(w, name, data); err != nil {
+		fmt.Printf("Error rendering template %s: %v\n", name, err)
 		http.Error(w, "Internal Server Error: "+err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -630,6 +654,7 @@ func (h *BioPage) renderError(w http.ResponseWriter, message string, status int)
 		Status:  status,
 	}
 	if err := h.templates.ExecuteTemplate(w, "error.html", data); err != nil {
+		fmt.Printf("Error rendering error template: %v\n", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }

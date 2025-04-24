@@ -3,68 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .BioPage.Title }}</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="/static/css/bio_page.css">
-    <meta name="theme-color" content="#0071e3">
+    <title>{{ if .BioPage }}{{ .BioPage.Title }}{{ else }}Bio Page{{ end }}</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons8-favicon-32.png">
     
-    <!-- Custom CSS will be injected by JavaScript -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const customCSS = `{{ .BioPage.CustomCSS }}`;
-            if (customCSS) {
-                const styleEl = document.createElement('style');
-                styleEl.textContent = customCSS;
-                document.head.appendChild(styleEl);
-            }
-        });
-    </script>
+    <style>
+        /* Inline styles to avoid dependency on external CSS */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            color: #333333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        
+        .bio-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 40px 20px;
+            box-sizing: border-box;
+        }
+        
+        .bio-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .bio-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .bio-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .bio-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+        }
+        
+        .bio-description {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .bio-links {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+        
+        .bio-link {
+            background-color: #f5f5f5;
+            padding: 16px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .bio-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .bio-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .bio-footer a {
+            color: #007aff;
+            text-decoration: none;
+        }
+        
+        /* Dark theme */
+        body.theme-dark {
+            background-color: #121212;
+            color: #f5f5f5;
+        }
+        
+        body.theme-dark .bio-link {
+            background-color: #2a2a2a;
+            color: #f5f5f5;
+            border-color: #3a3a3a;
+        }
+        
+        body.theme-dark .bio-description {
+            color: #aaa;
+        }
+        
+        /* Debug info */
+        .debug-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            display: none;
+        }
+    </style>
 </head>
-<body class="bio-page-body theme-{{ .BioPage.Theme }}">
-    <div class="bio-page-container">
-        <div class="bio-page-content show">
-            <!-- Header with profile image and title -->
-            <div class="bio-page-header">
-                {{ if .BioPage.ProfileImageURL }}
-                <div class="bio-avatar">
-                    <img src="{{ .BioPage.ProfileImageURL }}" alt="{{ .BioPage.Title }}" class="avatar-image">
-                </div>
-                {{ end }}
-                
-                <h1 class="bio-title">{{ .BioPage.Title }}</h1>
-                
-                {{ if .BioPage.Description }}
-                <div class="bio-description">{{ .BioPage.Description }}</div>
-                {{ end }}
+
+<body class="{{ if .BioPage }}theme-{{ .BioPage.Theme }}{{ else }}theme-default{{ end }}">
+    <div class="bio-container">
+        <!-- Debug button - only show in development -->
+        <button onclick="document.querySelector('.debug-info').style.display='block';" style="position:fixed; right:10px; bottom:10px; opacity:0.3;">Debug</button>
+        
+        <div class="bio-header">
+            {{ if and .BioPage .BioPage.ProfileImageURL }}
+            <div class="bio-avatar">
+                <img src="{{ .BioPage.ProfileImageURL }}" alt="{{ .BioPage.Title }}" onerror="this.parentNode.style.display='none'">
             </div>
+            {{ end }}
             
-            <!-- Links -->
-            <div class="bio-links">
-                {{ range .BioPage.Links }}
-                    {{ if .IsEnabled }}
-                    <a href="/b/link/{{ .ID }}" class="bio-link" target="_blank" rel="noopener">
-                        {{ if .Icon }}
-                        <span class="bio-link-icon">{{ .Icon }}</span>
+            <h1 class="bio-title">{{ if .BioPage }}{{ .BioPage.Title }}{{ else }}Bio Page Not Found{{ end }}</h1>
+            
+            {{ if and .BioPage .BioPage.Description }}
+            <div class="bio-description">{{ .BioPage.Description }}</div>
+            {{ end }}
+        </div>
+        
+        <div class="bio-links">
+            {{ if .BioPage }}
+                {{ if .BioPage.Links }}
+                    {{ range .BioPage.Links }}
+                        {{ if .IsEnabled }}
+                        <a href="/b/link/{{ .ID }}" class="bio-link" target="_blank" rel="noopener">
+                            <span>{{ .Title }}</span>
+                        </a>
                         {{ end }}
-                        <span class="bio-link-title">{{ .Title }}</span>
-                    </a>
                     {{ end }}
+                {{ else }}
+                    <div style="text-align: center; color: #888;">No links have been added yet.</div>
                 {{ end }}
-            </div>
-            
-            <!-- Footer with branding -->
-            <div class="bio-page-footer">
-                <div class="bio-footer-content">
-                    <a href="/" class="bio-footer-brand">
-                        <span class="bio-footer-logo">Rapid URL</span>
-                    </a>
-                    
-                    {{ if .IsOwner }}
-                    <a href="/bio/edit/{{ .BioPage.ID }}" class="bio-edit-link">Edit</a>
-                    {{ end }}
-                </div>
+            {{ else }}
+                <div style="text-align: center; color: #888;">This bio page could not be found or is not published.</div>
+            {{ end }}
+        </div>
+        
+        <div class="bio-footer">
+            <div>
+                <a href="/">Rapid URL</a>
+                {{ if and .BioPage .IsOwner }}
+                • <a href="/bio/edit/{{ .BioPage.ID }}">Edit Page</a>
+                {{ end }}
             </div>
         </div>
+        
+        <!-- Debug information - hidden by default -->
+        <div class="debug-info">
+            <strong>Debug Information:</strong>
+            BioPage Exists: {{ if .BioPage }}Yes{{ else }}No{{ end }}
+            {{ if .BioPage }}
+            ID: {{ .BioPage.ID }}
+            ShortCode: {{ .BioPage.ShortCode }}
+            Title: {{ .BioPage.Title }}
+            Theme: {{ .BioPage.Theme }}
+            IsPublished: {{ .BioPage.IsPublished }}
+            Links Count: {{ len .BioPage.Links | js }}
+            {{ end }}
+            IsOwner: {{ .IsOwner }}
+        </div>
     </div>
+    
+    <script id="pageData" type="application/json">
+        {
+            "bioPage": {{ if .BioPage }}{
+                "id": {{ .BioPage.ID }},
+                "title": {{ .BioPage.Title | printf "%q" }},
+                "shortCode": {{ .BioPage.ShortCode | printf "%q" }},
+                "theme": {{ .BioPage.Theme | printf "%q" }},
+                "isPublished": {{ .BioPage.IsPublished }},
+                "linksCount": {{ len .BioPage.Links }}
+            }{{ else }}null{{ end }},
+            "isOwner": {{ .IsOwner }}
+        }
+    </script>
+
+    <script>
+        // Simple script to log debug info to console
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded');
+
+            const pageDataElement = document.getElementById('pageData');
+            const pageData = JSON.parse(pageDataElement.textContent || '{}');
+            const bioPageData = pageData.bioPage;
+            const isOwner = pageData.isOwner;
+
+            console.log('BioPage exists:', bioPageData !== null);
+            console.log('BioPage data:', bioPageData);
+            console.log('IsOwner:', isOwner);
+        });
+    </script>
 </body>
 </html>
