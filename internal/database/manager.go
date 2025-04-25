@@ -81,7 +81,7 @@ func (m *Manager) Migrate() error {
 		err = m.db.QueryRow("SELECT version, dirty FROM schema_migrations LIMIT 1").Scan(&version, &dirty)
 		if err == nil {
 			log.Printf("Migration table exists. Current version: %d, Dirty: %t\n", version, dirty)
-			
+
 			if dirty {
 				log.Printf("Found dirty migration at version %d, fixing...\n", version)
 				// Clean up the dirty migration
@@ -107,7 +107,7 @@ func (m *Manager) Migrate() error {
 	// Create a new migrate instance
 	migrationsPath := fmt.Sprintf("file://%s", m.config.MigrationsPath)
 	log.Printf("Using migrations from: %s\n", migrationsPath)
-	
+
 	migrator, err := migrate.NewWithDatabaseInstance(
 		migrationsPath,
 		"postgres",
@@ -118,7 +118,7 @@ func (m *Manager) Migrate() error {
 	}
 
 	// Get current version before running migrations
-	version, _, vErr := migrator.Version()  // Changed "dirty" to "_" since it's not used
+	version, _, vErr := migrator.Version() // Changed "dirty" to "_" since it's not used
 	if vErr != nil && vErr != migrate.ErrNilVersion {
 		log.Printf("Warning: Could not get migration version: %v\n", vErr)
 	} else if vErr == nil {
@@ -129,10 +129,10 @@ func (m *Manager) Migrate() error {
 	err = migrator.Up()
 	if err != nil && err != migrate.ErrNoChange {
 		log.Printf("Migration error: %v\n", err)
-		
+
 		// Check if it's a dirty database error (compare error strings instead of types)
 		if err.Error() == "Dirty database version 3. Fix and force version." {
-			version, _, vErr := migrator.Version()  // Changed "dirty" to "_" since it's not used
+			version, _, vErr := migrator.Version() // Changed "dirty" to "_" since it's not used
 			if vErr != nil {
 				log.Printf("Warning: Could not get migration version: %v\n", vErr)
 			} else {
@@ -142,7 +142,7 @@ func (m *Manager) Migrate() error {
 					return fmt.Errorf("failed to force migration version: %w", fErr)
 				}
 				log.Printf("Successfully forced migration to version %d\n", version)
-				
+
 				// Try running migrations again
 				upErr := migrator.Up()
 				if upErr != nil && upErr != migrate.ErrNoChange {

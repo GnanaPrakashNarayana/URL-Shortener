@@ -104,6 +104,7 @@ type BioPageResponse struct {
 	CreatedAt       time.Time        `json:"created_at"`
 	Visits          int              `json:"visits"`
 	IsPublished     bool             `json:"is_published"`
+	CustomCSS       string           `json:"custom_css,omitempty"` // Added this field
 	Links           []*BioLinkResponse `json:"links,omitempty"`
 }
 
@@ -132,6 +133,7 @@ func (b *BioPage) ToBioPageResponse(baseURL string) *BioPageResponse {
 		CreatedAt:       b.CreatedAt,
 		Visits:          b.Visits,
 		IsPublished:     b.IsPublished,
+		CustomCSS:       b.CustomCSS, // Added this line to copy the CustomCSS field
 		Links:           make([]*BioLinkResponse, 0),
 	}
 

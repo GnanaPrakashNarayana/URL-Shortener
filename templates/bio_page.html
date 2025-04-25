@@ -6,110 +6,361 @@
     <title>{{ if .BioPage }}{{ .BioPage.Title }}{{ else }}Bio Page{{ end }}</title>
     <link rel="icon" type="image/png" sizes="32x32" href="/static/icons8-favicon-32.png">
     
+    <!-- Base stylesheet -->
     <style>
-        /* Inline styles to avoid dependency on external CSS */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #ffffff;
-            color: #333333;
+        /* Reset and base styles */
+        :root {
+            /* Apple-inspired color palette */
+            --primary-color: #007aff;
+            --primary-hover: #0a84ff;
+            --secondary-color: #8e8e93;
+            --tertiary-color: #d1d1d6;
+            --fill-color: #f0f0f0;
+            --fill-hover: #e8e8e8;
+            --label-color: #1d1d1f;
+            --secondary-label-color: #6e6e73;
+            --system-background: #ffffff;
+            --secondary-system-background: #f9f9f9;
+            --danger-color: #ff3b30;
+            --success-color: #34c759;
+            
+            /* Dark mode colors */
+            --label-color-dark: #ffffff;
+            --secondary-label-color-dark: rgba(235, 235, 245, 0.6);
+            --tertiary-color-dark: #3a3a3c;
+            --fill-color-dark: #2c2c2e;
+            --fill-hover-dark: #3a3a3c;
+            --system-background-dark: #000000;
+            --secondary-system-background-dark: #1c1c1e;
+            
+            /* Layout & Typography */
+            --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --border-radius-large: 12px;
+            --border-radius-medium: 8px;
+            --transition-speed-fast: 0.2s;
+            --transition-speed-medium: 0.3s;
+            --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06);
+            --shadow-card: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            display: flex;
-            justify-content: center;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.5;
             min-height: 100vh;
         }
         
-        .bio-container {
-            width: 100%;
-            max-width: 600px;
-            padding: 40px 20px;
-            box-sizing: border-box;
+        .bio-page-body {
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--system-background);
+            padding: 0;
+            margin: 0;
+            transition: background-color var(--transition-speed-medium) ease, color var(--transition-speed-medium) ease;
         }
         
-        .bio-header {
+        .bio-page-container {
+            width: 100%;
+            max-width: 600px;
+            min-height: 100vh;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .bio-page-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .bio-page-header {
             text-align: center;
-            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            padding-bottom: 20px;
         }
         
         .bio-avatar {
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            margin: 0 auto 20px;
             overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 8px;
+            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
         }
         
-        .bio-avatar img {
+        .avatar-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
         
         .bio-title {
-            font-size: 28px;
+            font-size: 1.85rem;
             font-weight: 700;
-            margin: 0 0 10px 0;
+            margin: 0;
+            color: var(--label-color);
+            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            animation-delay: 0.1s;
         }
         
         .bio-description {
-            color: #666;
-            margin-bottom: 20px;
+            font-size: 1rem;
+            color: var(--secondary-label-color);
+            max-width: 480px;
+            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            animation-delay: 0.2s;
+            line-height: 1.5;
         }
         
         .bio-links {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 40px;
+            gap: 14px;
+            width: 100%;
+            margin-top: 8px;
         }
         
         .bio-link {
-            background-color: #f5f5f5;
-            padding: 16px;
-            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 24px;
+            background-color: var(--fill-color);
+            border-radius: var(--border-radius-large);
+            color: var(--label-color);
             text-decoration: none;
-            color: #333;
             font-weight: 500;
-            text-align: center;
-            border: 1px solid #e0e0e0;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: all var(--transition-speed-fast) ease;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--tertiary-color);
+            gap: 10px;
+            box-shadow: var(--shadow-subtle);
+            animation: fadeInUp 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            opacity: 0;
         }
+        
+        .bio-link:nth-child(1) { animation-delay: 0.25s; }
+        .bio-link:nth-child(2) { animation-delay: 0.35s; }
+        .bio-link:nth-child(3) { animation-delay: 0.45s; }
+        .bio-link:nth-child(4) { animation-delay: 0.55s; }
+        .bio-link:nth-child(5) { animation-delay: 0.65s; }
         
         .bio-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-card);
         }
         
-        .bio-footer {
+        .bio-link:active {
+            transform: translateY(-1px);
+        }
+        
+        .bio-link-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+        }
+        
+        .bio-link-title {
+            flex: 1;
             text-align: center;
-            margin-top: 30px;
-            color: #888;
-            font-size: 14px;
         }
         
-        .bio-footer a {
-            color: #007aff;
+        .bio-page-footer {
+            padding-top: 40px;
+            text-align: center;
+            width: 100%;
+            animation: fadeIn 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+            animation-delay: 1.2s;
+            opacity: 0;
+        }
+        
+        .bio-footer-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .bio-footer-brand {
             text-decoration: none;
+            color: var(--secondary-label-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.7;
+            transition: opacity var(--transition-speed-fast) ease;
         }
         
-        /* Dark theme */
-        body.theme-dark {
-            background-color: #121212;
-            color: #f5f5f5;
+        .bio-footer-brand:hover {
+            opacity: 1;
         }
         
-        body.theme-dark .bio-link {
-            background-color: #2a2a2a;
-            color: #f5f5f5;
-            border-color: #3a3a3a;
+        .bio-edit-link {
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: var(--border-radius-small);
+            background-color: var(--fill-color);
+            transition: all var(--transition-speed-fast) ease;
         }
         
-        body.theme-dark .bio-description {
-            color: #aaa;
+        .bio-edit-link:hover {
+            background-color: var(--fill-hover);
         }
         
-        /* Debug info */
+        /* Themes */
+        .theme-default {
+            --bio-background: var(--system-background);
+            --bio-text-color: var(--label-color);
+            --bio-link-bg: var(--fill-color);
+            --bio-link-color: var(--label-color);
+            --bio-link-border: var(--tertiary-color);
+            --bio-description-color: var(--secondary-label-color);
+        }
+        
+        .theme-dark {
+            --bio-background: #000000;
+            --bio-text-color: #ffffff;
+            --bio-link-bg: #1c1c1e;
+            --bio-link-color: #ffffff;
+            --bio-link-border: #2c2c2e;
+            --bio-description-color: rgba(255, 255, 255, 0.7);
+            
+            background-color: var(--bio-background);
+            color: var(--bio-text-color);
+        }
+        
+        .theme-dark .bio-title {
+            color: var(--bio-text-color);
+        }
+        
+        .theme-dark .bio-description {
+            color: var(--bio-description-color);
+        }
+        
+        .theme-dark .bio-link {
+            background-color: var(--bio-link-bg);
+            color: var(--bio-link-color);
+            border-color: var(--bio-link-border);
+        }
+        
+        .theme-dark .bio-footer-brand {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .theme-dark .bio-edit-link {
+            background-color: #2c2c2e;
+        }
+        
+        .theme-light {
+            --bio-background: #ffffff;
+            --bio-text-color: #000000;
+            --bio-link-bg: #f2f2f7;
+            --bio-link-color: #000000;
+            --bio-link-border: #e5e5ea;
+            --bio-description-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        .theme-blue {
+            --bio-background: linear-gradient(180deg, #0071e3 0%, #2c88d9 100%);
+            --bio-text-color: #ffffff;
+            --bio-link-bg: rgba(255, 255, 255, 0.2);
+            --bio-link-color: #ffffff;
+            --bio-link-border: rgba(255, 255, 255, 0.3);
+            --bio-description-color: rgba(255, 255, 255, 0.8);
+            
+            background: var(--bio-background);
+            color: var(--bio-text-color);
+        }
+        
+        .theme-green {
+            --bio-background: linear-gradient(180deg, #34c759 0%, #30d158 100%);
+            --bio-text-color: #ffffff;
+            --bio-link-bg: rgba(255, 255, 255, 0.2);
+            --bio-link-color: #ffffff;
+            --bio-link-border: rgba(255, 255, 255, 0.3);
+            --bio-description-color: rgba(255, 255, 255, 0.8);
+            
+            background: var(--bio-background);
+            color: var(--bio-text-color);
+        }
+        
+        .theme-purple {
+            --bio-background: linear-gradient(180deg, #5e5ce6 0%, #7d7aec 100%);
+            --bio-text-color: #ffffff;
+            --bio-link-bg: rgba(255, 255, 255, 0.15);
+            --bio-link-color: #ffffff;
+            --bio-link-border: rgba(255, 255, 255, 0.25);
+            --bio-description-color: rgba(255, 255, 255, 0.8);
+            
+            background: var(--bio-background);
+            color: var(--bio-text-color);
+        }
+        
+        .theme-orange {
+            --bio-background: linear-gradient(180deg, #ff9500 0%, #ffac30 100%);
+            --bio-text-color: #ffffff;
+            --bio-link-bg: rgba(255, 255, 255, 0.15);
+            --bio-link-color: #ffffff;
+            --bio-link-border: rgba(255, 255, 255, 0.25);
+            --bio-description-color: rgba(255, 255, 255, 0.8);
+            
+            background: var(--bio-background);
+            color: var(--bio-text-color);
+        }
+        
+        .theme-minimal {
+            --bio-background: #ffffff;
+            --bio-text-color: #000000;
+            --bio-link-bg: transparent;
+            --bio-link-color: #000000;
+            --bio-link-border: #e5e5ea;
+            --bio-description-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translate3d(0, 20px, 0);
+            }
+            to {
+                opacity: 1;
+                transform: translate3d(0, 0, 0);
+            }
+        }
+        
+        /* Debug styling */
         .debug-info {
             margin-top: 20px;
             padding: 10px;
@@ -122,54 +373,85 @@
             display: none;
         }
     </style>
+    
+    <!-- Theme-specific CSS -->
+    {{ if and .BioPage .BioPage.Theme }}
+    <style>
+        body {
+            background-color: var(--bio-background);
+            color: var(--bio-text-color);
+        }
+        
+        .bio-title {
+            color: var(--bio-text-color);
+        }
+        
+        .bio-description {
+            color: var(--bio-description-color);
+        }
+        
+        .bio-link {
+            background-color: var(--bio-link-bg);
+            color: var(--bio-link-color);
+            border-color: var(--bio-link-border);
+        }
+    </style>
+    {{ end }}
+    
+    <!-- Custom CSS -->
+    {{ if and .BioPage .BioPage.CustomCSS }}
+    <style>
+        {{ .BioPage.CustomCSS }}
+    </style>
+    {{ end }}
 </head>
 
-<body class="{{ if .BioPage }}theme-{{ .BioPage.Theme }}{{ else }}theme-default{{ end }}">
-    <div class="bio-container">
-        <!-- Debug button - only show in development -->
-        <button onclick="document.querySelector('.debug-info').style.display='block';" style="position:fixed; right:10px; bottom:10px; opacity:0.3;">Debug</button>
-        
-        <div class="bio-header">
-            {{ if and .BioPage .BioPage.ProfileImageURL }}
-            <div class="bio-avatar">
-                <img src="{{ .BioPage.ProfileImageURL }}" alt="{{ .BioPage.Title }}" onerror="this.parentNode.style.display='none'">
+<body class="bio-page-body theme-{{ if .BioPage }}{{ .BioPage.Theme }}{{ else }}default{{ end }}">
+    <div class="bio-page-container">
+        <div class="bio-page-content">
+            <div class="bio-page-header">
+                {{ if and .BioPage .BioPage.ProfileImageURL }}
+                <div class="bio-avatar">
+                    <img src="{{ .BioPage.ProfileImageURL }}" alt="{{ .BioPage.Title }}" class="avatar-image" onerror="this.style.display='none'">
+                </div>
+                {{ end }}
+                
+                <h1 class="bio-title">{{ if .BioPage }}{{ .BioPage.Title }}{{ else }}Bio Page Not Found{{ end }}</h1>
+                
+                {{ if and .BioPage .BioPage.Description }}
+                <div class="bio-description">{{ .BioPage.Description }}</div>
+                {{ end }}
             </div>
-            {{ end }}
             
-            <h1 class="bio-title">{{ if .BioPage }}{{ .BioPage.Title }}{{ else }}Bio Page Not Found{{ end }}</h1>
-            
-            {{ if and .BioPage .BioPage.Description }}
-            <div class="bio-description">{{ .BioPage.Description }}</div>
-            {{ end }}
-        </div>
-        
-        <div class="bio-links">
-            {{ if .BioPage }}
-                {{ if .BioPage.Links }}
-                    {{ range .BioPage.Links }}
-                        {{ if .IsEnabled }}
-                        <a href="/b/link/{{ .ID }}" class="bio-link" target="_blank" rel="noopener">
-                            <span>{{ .Title }}</span>
-                        </a>
+            <div class="bio-links">
+                {{ if .BioPage }}
+                    {{ if .BioPage.Links }}
+                        {{ range .BioPage.Links }}
+                            {{ if .IsEnabled }}
+                            <a href="/b/link/{{ .ID }}" class="bio-link" target="_blank" rel="noopener">
+                                {{ if .Icon }}<div class="bio-link-icon">{{ .Icon }}</div>{{ end }}
+                                <div class="bio-link-title">{{ .Title }}</div>
+                            </a>
+                            {{ end }}
                         {{ end }}
+                    {{ else }}
+                        <div style="text-align: center; color: var(--secondary-label-color);">No links have been added yet.</div>
                     {{ end }}
                 {{ else }}
-                    <div style="text-align: center; color: #888;">No links have been added yet.</div>
-                {{ end }}
-            {{ else }}
-                <div style="text-align: center; color: #888;">This bio page could not be found or is not published.</div>
-            {{ end }}
-        </div>
-        
-        <div class="bio-footer">
-            <div>
-                <a href="/">Rapid URL</a>
-                {{ if and .BioPage .IsOwner }}
-                • <a href="/bio/edit/{{ .BioPage.ID }}">Edit Page</a>
+                    <div style="text-align: center; color: var(--secondary-label-color);">This bio page could not be found or is not published.</div>
                 {{ end }}
             </div>
+            
+            <div class="bio-page-footer">
+                <div class="bio-footer-content">
+                    <a href="/" class="bio-footer-brand">Rapid URL</a>
+                    {{ if and .BioPage .IsOwner }}
+                    <a href="/bio/edit/{{ .BioPage.ID }}" class="bio-edit-link">Edit Page</a>
+                    {{ end }}
+                </div>
+            </div>
         </div>
-        
+
         <!-- Debug information - hidden by default -->
         <div class="debug-info">
             <strong>Debug Information:</strong>
@@ -179,40 +461,20 @@
             ShortCode: {{ .BioPage.ShortCode }}
             Title: {{ .BioPage.Title }}
             Theme: {{ .BioPage.Theme }}
+            CustomCSS: {{ if .BioPage.CustomCSS }}Yes{{ else }}No{{ end }}
             IsPublished: {{ .BioPage.IsPublished }}
-            Links Count: {{ len .BioPage.Links | js }}
+            Links Count: {{ len .BioPage.Links }}
             {{ end }}
             IsOwner: {{ .IsOwner }}
         </div>
     </div>
     
-    <script id="pageData" type="application/json">
-        {
-            "bioPage": {{ if .BioPage }}{
-                "id": {{ .BioPage.ID }},
-                "title": {{ .BioPage.Title | printf "%q" }},
-                "shortCode": {{ .BioPage.ShortCode | printf "%q" }},
-                "theme": {{ .BioPage.Theme | printf "%q" }},
-                "isPublished": {{ .BioPage.IsPublished }},
-                "linksCount": {{ len .BioPage.Links }}
-            }{{ else }}null{{ end }},
-            "isOwner": {{ .IsOwner }}
-        }
-    </script>
-
+    <!-- Debug button - only in corners to not interfere with design -->
+    <button onclick="document.querySelector('.debug-info').style.display='block';" style="position:fixed; right:10px; bottom:10px; opacity:0.3; background:none; border:none; font-size:12px; cursor:pointer;">Debug</button>
+    
     <script>
-        // Simple script to log debug info to console
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded');
-
-            const pageDataElement = document.getElementById('pageData');
-            const pageData = JSON.parse(pageDataElement.textContent || '{}');
-            const bioPageData = pageData.bioPage;
-            const isOwner = pageData.isOwner;
-
-            console.log('BioPage exists:', bioPageData !== null);
-            console.log('BioPage data:', bioPageData);
-            console.log('IsOwner:', isOwner);
+            console.log('Bio page loaded with theme: {{ if .BioPage }}{{ .BioPage.Theme }}{{ else }}default{{ end }}');
         });
     </script>
 </body>

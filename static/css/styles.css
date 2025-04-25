@@ -1593,3 +1593,193 @@ body.dark-mode .qr-code-format-option input[type="radio"] {
         grid-template-columns: 1fr;
     }
 }
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--secondary-system-background);
+    padding: 24px;
+    border-radius: var(--border-radius-large);
+    box-shadow: var(--shadow-card);
+    width: 100%;
+    max-width: 500px;
+    animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.close-modal {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 1.5rem;
+    color: var(--secondary-label-color);
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: var(--label-color);
+}
+
+.modal h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* Improved Tab Styling */
+.tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--tertiary-color);
+    width: 100%;
+    overflow: hidden;
+    border-radius: var(--border-radius-medium) var(--border-radius-medium) 0 0;
+    background-color: var(--secondary-system-background);
+}
+
+.tab-button {
+    background-color: var(--secondary-system-background);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--secondary-label-color);
+    cursor: pointer;
+    position: relative;
+    transition: all var(--transition-speed-fast) ease;
+    flex: 1;
+    text-align: center;
+}
+
+.tab-button:hover {
+    color: var(--primary-color);
+    background-color: var(--fill-hover);
+}
+
+.tab-button.active {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    background-color: var(--fill-color);
+}
+
+.tab-content {
+    display: none;
+    width: 100%;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+    .tab-button {
+        background-color: var(--secondary-system-background-dark);
+    }
+    
+    .tab-button.active {
+        background-color: var(--fill-color-dark);
+    }
+    
+    .tab-button:hover {
+        background-color: var(--fill-hover-dark);
+    }
+}
+
+/* Fix theme dropdown styling */
+select.form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236e6e73' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+/* Improve theme preview */
+.preview-container {
+    border: 1px solid var(--tertiary-color);
+    border-radius: var(--border-radius-medium);
+    overflow: hidden;
+    height: 400px;
+    margin-bottom: 24px;
+}
+
+.bio-preview-page {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bio-preview-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.bio-preview-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: var(--tertiary-color);
+    margin-bottom: 12px;
+}
+
+.bio-preview-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.bio-preview-description {
+    color: var(--secondary-label-color);
+    text-align: center;
+    font-size: 1rem;
+    margin-bottom: 24px;
+}
+
+.bio-preview-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.bio-preview-link {
+    background-color: var(--fill-color);
+    border: 1px solid var(--tertiary-color);
+    border-radius: var(--border-radius-medium);
+    padding: 12px;
+    text-align: center;
+    font-weight: 500;
+}
