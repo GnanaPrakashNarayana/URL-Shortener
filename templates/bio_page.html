@@ -233,6 +233,40 @@
             background-color: var(--fill-hover);
         }
         
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translate3d(0, 20px, 0);
+            }
+            to {
+                opacity: 1;
+                transform: translate3d(0, 0, 0);
+            }
+        }
+        
+        /* Debug styling */
+        .debug-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            display: none;
+        }
+    </style>
+    
+    <!-- Only include theme CSS if no custom CSS -->
+    {{ if not .BioPage.CustomCSS }}
+    <style>
         /* Themes */
         .theme-default {
             --bio-background: var(--system-background);
@@ -241,6 +275,9 @@
             --bio-link-color: var(--label-color);
             --bio-link-border: var(--tertiary-color);
             --bio-description-color: var(--secondary-label-color);
+            
+            background-color: var(--bio-background);
+            color: var(--bio-text-color);
         }
         
         .theme-dark {
@@ -284,6 +321,9 @@
             --bio-link-color: #000000;
             --bio-link-border: #e5e5ea;
             --bio-description-color: rgba(0, 0, 0, 0.6);
+            
+            background-color: var(--bio-background);
+            color: var(--bio-text-color);
         }
         
         .theme-blue {
@@ -341,64 +381,14 @@
             --bio-link-color: #000000;
             --bio-link-border: #e5e5ea;
             --bio-description-color: rgba(0, 0, 0, 0.6);
-        }
-        
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translate3d(0, 20px, 0);
-            }
-            to {
-                opacity: 1;
-                transform: translate3d(0, 0, 0);
-            }
-        }
-        
-        /* Debug styling */
-        .debug-info {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #f5f5f5;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 12px;
-            white-space: pre-wrap;
-            display: none;
-        }
-    </style>
-    
-    <!-- Theme-specific CSS -->
-    {{ if and .BioPage .BioPage.Theme }}
-    <style>
-        body {
+            
             background-color: var(--bio-background);
             color: var(--bio-text-color);
-        }
-        
-        .bio-title {
-            color: var(--bio-text-color);
-        }
-        
-        .bio-description {
-            color: var(--bio-description-color);
-        }
-        
-        .bio-link {
-            background-color: var(--bio-link-bg);
-            color: var(--bio-link-color);
-            border-color: var(--bio-link-border);
         }
     </style>
     {{ end }}
     
-    <!-- Custom CSS -->
+    <!-- Custom CSS - complete override when present -->
     {{ if and .BioPage .BioPage.CustomCSS }}
     <style>
         {{ .BioPage.CustomCSS }}
@@ -406,7 +396,7 @@
     {{ end }}
 </head>
 
-<body class="bio-page-body theme-{{ if .BioPage }}{{ .BioPage.Theme }}{{ else }}default{{ end }}">
+<body class="bio-page-body {{ if and .BioPage .BioPage.CustomCSS }}custom-theme{{ else }}theme-{{ if .BioPage }}{{ .BioPage.Theme }}{{ else }}default{{ end }}{{ end }}">
     <div class="bio-page-container">
         <div class="bio-page-content">
             <div class="bio-page-header">
@@ -460,7 +450,7 @@
             ID: {{ .BioPage.ID }}
             ShortCode: {{ .BioPage.ShortCode }}
             Title: {{ .BioPage.Title }}
-            Theme: {{ .BioPage.Theme }}
+            Theme: {{ if .BioPage.CustomCSS }}custom-theme{{ else }}{{ .BioPage.Theme }}{{ end }}
             CustomCSS: {{ if .BioPage.CustomCSS }}Yes{{ else }}No{{ end }}
             IsPublished: {{ .BioPage.IsPublished }}
             Links Count: {{ len .BioPage.Links }}
@@ -469,12 +459,20 @@
         </div>
     </div>
     
-    <!-- Debug button - only in corners to not interfere with design -->
-    <button onclick="document.querySelector('.debug-info').style.display='block';" style="position:fixed; right:10px; bottom:10px; opacity:0.3; background:none; border:none; font-size:12px; cursor:pointer;">Debug</button>
+    <!-- Debug button - now more visible to help troubleshoot -->
+    <button onclick="document.querySelector('.debug-info').style.display='block';" style="position:fixed; right:10px; bottom:10px; opacity:0.6; background:none; border:none; font-size:12px; cursor:pointer; color: red; font-weight: bold;">Debug</button>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Bio page loaded with theme: {{ if .BioPage }}{{ .BioPage.Theme }}{{ else }}default{{ end }}');
+            console.log('Bio page loaded with theme: {{ if and .BioPage .BioPage.CustomCSS }}custom-theme{{ else }}{{ if .BioPage }}{{ .BioPage.Theme }}{{ else }}default{{ end }}{{ end }}');
+            console.log('Has custom CSS: {{ if and .BioPage .BioPage.CustomCSS }}Yes{{ else }}No{{ end }}');
+            
+            // Show debug info automatically when custom CSS is present
+            {{ if and .BioPage .BioPage.CustomCSS }}
+            setTimeout(function() {
+                document.querySelector('.debug-info').style.display = 'block';
+            }, 1000);
+            {{ end }}
         });
     </script>
 </body>
