@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/models"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
@@ -72,10 +73,16 @@ func (s *BioPageService) GetBioPage(ctx context.Context, id int) (*models.BioPag
 
 // GetBioPageByShortCode retrieves a bio page by short code
 func (s *BioPageService) GetBioPageByShortCode(ctx context.Context, shortCode string) (*models.BioPageResponse, error) {
+	fmt.Printf("Attempting to get bio page with shortCode: %s\n", shortCode)
+
 	bioPage, err := s.repo.GetBioPageByShortCode(ctx, shortCode)
 	if err != nil {
+		fmt.Printf("Error fetching bio page from repository: %v\n", err)
 		return nil, err
 	}
+
+	fmt.Printf("Successfully found bio page: ID=%d, Title=%s, Published=%v\n",
+		bioPage.ID, bioPage.Title, bioPage.IsPublished)
 
 	return bioPage.ToBioPageResponse(s.baseURL), nil
 }

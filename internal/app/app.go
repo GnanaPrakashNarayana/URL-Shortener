@@ -229,12 +229,18 @@ func New(cfg *config.Config) (*App, error) {
 	router.HandleFunc("/", webHandler.Home).Methods(http.MethodGet)
 	router.HandleFunc("/shorten", webHandler.ShortenURL).Methods(http.MethodPost)
 	
-	// Public bio page routes
-	router.HandleFunc("/b/{shortCode}", bioPageHandler.ViewBioPage).Methods(http.MethodGet)
+	// Find this section in internal/app/app.go and replace it with the following:
+
+	// First, make sure this is BEFORE any other route with a similar pattern
+	// This should be placed BEFORE the regular URL redirect route
+
+	// Special routes (bio pages and their links)
 	router.HandleFunc("/b/link/{id:[0-9]+}", bioPageHandler.RedirectBioLink).Methods(http.MethodGet)
-	
-	// Regular URL redirect
+	router.HandleFunc("/b/{shortCode}", bioPageHandler.ViewBioPage).Methods(http.MethodGet)
+
+	// Then place the regular URL redirect route after these specific routes
 	router.HandleFunc("/{id}", apiHandler.RedirectURL).Methods(http.MethodGet)
+		
 
 	// Password verification routes
 	router.HandleFunc("/password/{id}", apiHandler.PasswordForm).Methods(http.MethodGet)

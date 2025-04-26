@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/middleware"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/models"
+	"github.com/GnanaPrakashNarayana/url-shortener/internal/repository"
 	"github.com/GnanaPrakashNarayana/url-shortener/internal/services"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/mux"
@@ -29,10 +31,26 @@ func NewBioPage(bioPageService *services.BioPageService, templatesDir string) (*
 	// Add template functions
 	tmpl = tmpl.Funcs(GetTemplateFuncs())
 
+	// Explicitly print which templates are being loaded
+	matches, err := filepath.Glob(filepath.Join(templatesDir, "*.html"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find templates: %w", err)
+	}
+
+	fmt.Printf("Loading templates from %s: found %d templates\n", templatesDir, len(matches))
+	for _, match := range matches {
+		fmt.Printf("  - %s\n", filepath.Base(match))
+	}
+
 	// Parse templates
 	templates, err := tmpl.ParseGlob(filepath.Join(templatesDir, "*.html"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to parse templates: %w", err)
+	}
+
+	// Verify bio_page.html template exists
+	if t := templates.Lookup("bio_page.html"); t == nil {
+		return nil, fmt.Errorf("bio_page.html template not found")
 	}
 
 	return &BioPage{
@@ -533,79 +551,97 @@ func (h *BioPage) ReorderBioLinks(w http.ResponseWriter, r *http.Request) {
 
 // ViewBioPage displays the public bio page
 func (h *BioPage) ViewBioPage(w http.ResponseWriter, r *http.Request) {
-    // Get the bio page short code from the URL
-    vars := mux.Vars(r)
-    shortCode := vars["shortCode"]
+	// Get the bio page short code from the URL
+	vars := mux.Vars(r)
+	shortCode := vars["shortCode"]
 
-    // Log shortcode for debugging
-    fmt.Printf("Accessing bio page with shortcode: %s\n", shortCode)
+	fmt.Printf("→ ViewBioPage called with shortCode: %s\n", shortCode)
 
-    // Get the bio page
-    bioPage, err := h.bioPageService.GetBioPageByShortCode(r.Context(), shortCode)
-    if err != nil {
-        fmt.Printf("Error retrieving bio page: %v\n", err)
-        h.renderError(w, fmt.Sprintf("Bio page not found: %v", err), http.StatusNotFound)
-        return
-    }
+	if shortCode == "" {
+		fmt.Println("Error: Empty shortCode received")
+		h.renderError(w, "Invalid bio page URL", http.StatusBadRequest)
+		return
+	}
 
-    // Check if the bio page is published
-    if !bioPage.IsPublished {
-        fmt.Printf("Bio page is not published: %d\n", bioPage.ID)
-        h.renderError(w, "This bio page is not published", http.StatusNotFound)
-        return
-    }
+	// Get the bio page
+	bioPage, err := h.bioPageService.GetBioPageByShortCode(r.Context(), shortCode)
+	if err != nil {
+		fmt.Printf("Error retrieving bio page with shortCode '%s': %v\n", shortCode, err)
 
-    // Log the bio page data for debugging
-    fmt.Printf("Bio page found: ID=%d, Title=%s, Links=%d\n", 
-               bioPage.ID, bioPage.Title, len(bioPage.Links))
+		// Check if this is a "not found" error
+		if errors.Is(err, repository.ErrNotFound) {
+			fmt.Printf("Bio page not found in database: shortCode=%s\n", shortCode)
+			h.renderError(w, "Bio page not found", http.StatusNotFound)
+			return
+		}
 
-    // Increment the visit count
-    err = h.bioPageService.IncrementBioPageVisits(r.Context(), bioPage.ID)
-    if err != nil {
-        fmt.Printf("Error incrementing visit count: %v\n", err)
-    }
+		// Some other error
+		h.renderError(w, "Error retrieving bio page", http.StatusInternalServerError)
+		return
+	}
 
-    // Get the user from the context (if any)
-    user := middleware.GetUserFromContext(r.Context())
+	// Check if the bio page is published
+	if !bioPage.IsPublished {
+		fmt.Printf("Bio page is not published: ID=%d, shortCode=%s\n", bioPage.ID, shortCode)
+		h.renderError(w, "This bio page is not published", http.StatusNotFound)
+		return
+	}
 
-    // Check if the user owns the bio page
-    isOwner := user != nil && user.ID == bioPage.UserID
+	fmt.Printf("Successfully retrieved bio page: ID=%d, Title=%s, Links=%d\n",
+		bioPage.ID, bioPage.Title, len(bioPage.Links))
 
-    // Render the template
-    data := struct {
-        BioPage   *models.BioPageResponse
-        User      *models.User
-        IsOwner   bool
-        CSRFToken string
-    }{
-        BioPage:   bioPage,
-        User:      user,
-        IsOwner:   isOwner,
-        CSRFToken: csrf.Token(r),
-    }
+	// Increment the visit count
+	err = h.bioPageService.IncrementBioPageVisits(r.Context(), bioPage.ID)
+	if err != nil {
+		fmt.Printf("Warning: Failed to increment visit count: %v\n", err)
+		// Continue anyway - this is not critical
+	}
 
-    // Set content type and cache control headers
-    w.Header().Set("Content-Type", "text/html; charset=utf-8")
-    w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-    w.Header().Set("Pragma", "no-cache")
-    w.Header().Set("Expires", "0")
+	// Get the user from the context (if any)
+	user := middleware.GetUserFromContext(r.Context())
 
-    // Render the template
-    if err := h.templates.ExecuteTemplate(w, "bio_page.html", data); err != nil {
-        fmt.Printf("Error rendering template: %v\n", err)
-        http.Error(w, "Error rendering page: "+err.Error(), http.StatusInternalServerError)
-        return
-    }
+	// Check if the user owns the bio page
+	isOwner := user != nil && user.ID == bioPage.UserID
 
-    fmt.Printf("Bio page template rendered successfully\n")
+	// Render the template
+	data := struct {
+		BioPage   *models.BioPageResponse
+		User      *models.User
+		IsOwner   bool
+		CSRFToken string
+	}{
+		BioPage:   bioPage,
+		User:      user,
+		IsOwner:   isOwner,
+		CSRFToken: csrf.Token(r),
+	}
+
+	// Set headers explicitly
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+
+	// Render the template
+	if err := h.templates.ExecuteTemplate(w, "bio_page.html", data); err != nil {
+		fmt.Printf("Error rendering bio_page.html template: %v\n", err)
+		http.Error(w, "Error rendering page: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Printf("Successfully rendered bio page: ID=%d, shortCode=%s\n", bioPage.ID, shortCode)
 }
 
 // RedirectBioLink handles redirecting to a bio link
 func (h *BioPage) RedirectBioLink(w http.ResponseWriter, r *http.Request) {
 	// Get the bio link ID from the URL
 	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
+	idStr := vars["id"]
+	fmt.Printf("Redirecting bio link with ID: %s\n", idStr)
+
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		fmt.Printf("Error converting ID to integer: %v\n", err)
 		h.renderError(w, "Invalid bio link ID", http.StatusBadRequest)
 		return
 	}
@@ -613,15 +649,19 @@ func (h *BioPage) RedirectBioLink(w http.ResponseWriter, r *http.Request) {
 	// Get the bio link
 	bioLink, err := h.bioPageService.GetBioLinkByID(r.Context(), id)
 	if err != nil {
+		fmt.Printf("Error retrieving bio link: %v\n", err)
 		h.renderError(w, "Bio link not found", http.StatusNotFound)
 		return
 	}
 
 	// Check if the bio link is enabled
 	if !bioLink.IsEnabled {
+		fmt.Printf("Bio link is disabled: ID=%d\n", id)
 		h.renderError(w, "This link is disabled", http.StatusNotFound)
 		return
 	}
+
+	fmt.Printf("Redirecting to URL: %s\n", bioLink.URL)
 
 	// Increment the visit count
 	err = h.bioPageService.IncrementBioLinkVisits(r.Context(), id)

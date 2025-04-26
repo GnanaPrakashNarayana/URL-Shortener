@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ if .BioPage }}{{ .BioPage.Title }}{{ else }}Bio Page{{ end }}</title>
+    <!-- Empty favicon to prevent 404 errors -->
+    <link rel="icon" href="data:,">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/icons8-favicon-32.png">
     
     <!-- Base stylesheet -->
